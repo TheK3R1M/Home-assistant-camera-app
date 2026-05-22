@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Kamera Gözcüsü - Web Modu</title>
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+	
+	<style>
+		:root {
+			--bg-gradient: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+			--glass-bg: rgba(255, 255, 255, 0.06);
+			--glass-border: rgba(255, 255, 255, 0.08);
+			--glass-shadow: rgba(0, 0, 0, 0.3);
+			--text-primary: #f8fafc;
+			--text-secondary: #94a3b8;
+			--primary-color: #3b82f6;
+			--primary-hover: #2563eb;
+			--success-color: #10b981;
+			--success-hover: #059669;
+			--error-color: #ef4444;
+		}
+
+		* {
+			box-sizing: border-box;
+			margin: 0;
+			padding: 0;
+		}
+
+		body {
+			font-family: 'Inter', sans-serif;
+			background: var(--bg-gradient);
+			color: var(--text-primary);
+			min-height: 100vh;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			overflow-x: hidden;
+		}
+
+		.app-container {
+			background: var(--glass-bg);
+			backdrop-filter: blur(20px) saturate(180%);
+			-webkit-backdrop-filter: blur(20px) saturate(180%);
+			border: 1px solid var(--glass-border);
+			box-shadow: 0 25px 50px -12px var(--glass-shadow);
+			border-radius: 24px;
+			width: 100%;
+			max-width: 900px;
+			padding: 24px;
+			display: flex;
+			flex-direction: column;
+			gap: 20px;
+			position: relative;
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		/* Header Section */
+		header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+			padding-bottom: 16px;
+		}
+
+		.title-area h1 {
+			font-size: 20px;
+			font-weight: 600;
+			letter-spacing: -0.5px;
+			background: linear-gradient(to right, #ffffff, #94a3b8);
+			-webkit-background-clip: text;
+			-webkit-text-fill-color: transparent;
+		}
+
+		.title-area p {
+			font-size: 12px;
+			color: var(--text-secondary);
+			margin-top: 2px;
+		}
+
+		.controls-top {
+			display: flex;
+			align-items: center;
+			gap: 12px;
+		}
+
+		select {
+			background: rgba(15, 23, 42, 0.6);
+			border: 1px solid var(--glass-border);
+			color: var(--text-primary);
+			padding: 8px 16px;
+			border-radius: 12px;
+			font-size: 13px;
+			font-weight: 500;
+			outline: none;
+			cursor: pointer;
+			transition: all 0.2s;
+		}
+
+		select:hover {
+			border-color: rgba(255, 255, 255, 0.2);
+			background: rgba(15, 23, 42, 0.8);
+		}
+
+		.icon-btn {
+			background: rgba(255, 255, 255, 0.05);
+			border: 1px solid var(--glass-border);
+			color: var(--text-primary);
+			width: 38px;
+			height: 38px;
+			border-radius: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			transition: all 0.2s;
+			font-size: 16px;
+		}
+
+		.icon-btn:hover {
+			background: rgba(255, 255, 255, 0.1);
+			border-color: rgba(255, 255, 255, 0.2);
+			transform: translateY(-1px);
+		}
+
+		/* Main Content Area */
+		.main-content {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 20px;
+		}
+
+		@media (min-width: 768px) {
+			.main-content {
+				grid-template-columns: 3fr 1.2fr;
+			}
+		}
+
+		/* Video Display Card */
+		.video-card {
+			background: rgba(0, 0, 0, 0.4);
+			border: 1px solid var(--glass-border);
+			border-radius: 20px;
+			aspect-ratio: 16/9;
+			overflow: hidden;
+			position: relative;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+		}
+
+		.video-stream {
+			width: 100%;
+			height: 100%;
+			object-fit: contain;
+			display: block;
+		}
+
+		/* Live Indicator & Info overlay */
+		.video-overlay {
+			position: absolute;
+			top: 16px;
+			left: 16px;
+			display: flex;
+			gap: 8px;
+			align-items: center;
+			pointer-events: none;
+			z-index: 10;
+		}
+
+		.badge {
+			padding: 4px 10px;
+			border-radius: 8px;
+			font-size: 11px;
+			font-weight: 600;
+			letter-spacing: 0.5px;
+			text-transform: uppercase;
+			backdrop-filter: blur(10px);
+		}
+
+		.badge-live {
+			background: rgba(239, 68, 68, 0.2);
+			border: 1px solid rgba(239, 68, 68, 0.4);
+			color: #fca5a5;
+			display: flex;
+			align-items: center;
+			gap: 6px;
+		}
+
+		.badge-live::before {
+			content: '';
+			display: inline-block;
+			width: 6px;
+			height: 6px;
+			background-color: var(--error-color);
+			border-radius: 50%;
+			animation: pulse 1.5s infinite;
+		}
+
+		@keyframes pulse {
+			0% { transform: scale(0.9); opacity: 0.6; }
+			50% { transform: scale(1.2); opacity: 1; }
+			100% { transform: scale(0.9); opacity: 0.6; }
+		}
+
+		.badge-status {
+			background: rgba(15, 23, 42, 0.6);
+			border: 1px solid var(--glass-border);
+			color: var(--text-secondary);
+		}
+
+		/* Sidebar / Controls Card */
+		.sidebar-card {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+			justify-content: space-between;
+		}
+
+		.controls-group {
+			display: flex;
+			flex-direction: column;
+			gap: 12px;
+		}
+
+		.btn {
+			background: var(--primary-color);
+			color: var(--text-primary);
+			border: none;
+			padding: 14px 20px;
+			border-radius: 16px;
+			font-size: 14px;
+			font-weight: 550;
+			cursor: pointer;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+			width: 100%;
+			box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+		}
+
+		.btn:hover {
+			background: var(--primary-hover);
+			transform: translateY(-1px);
+			box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+		}
+
+		.btn:active {
+			transform: translateY(1px);
+		}
+
+		.btn-success {
+			background: var(--success-color);
+			box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+		}
+
+		.btn-success:hover {
+			background: var(--success-hover);
+			box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+		}
+
+		.btn-secondary {
+			background: rgba(255, 255, 255, 0.05);
+			border: 1px solid var(--glass-border);
+			color: var(--text-primary);
+			box-shadow: none;
+		}
+
+		.btn-secondary:hover {
+			background: rgba(255, 255, 255, 0.1);
+			border-color: rgba(255, 255, 255, 0.2);
+			box-shadow: none;
+		}
+
+		.btn:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+			transform: none !important;
+		}
+
+		/* Status Bar */
+		.status-footer {
+			border-top: 1px solid rgba(255, 255, 255, 0.05);
+			padding-top: 14px;
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			font-size: 12px;
+			color: var(--text-secondary);
+		}
+
+		.status-indicator {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+		}
+
+		.status-dot {
+			width: 8px;
+			height: 8px;
+			border-radius: 50%;
+			background-color: var(--text-secondary);
+		}
+
+		.status-dot.online {
+			background-color: var(--success-color);
+			box-shadow: 0 0 8px var(--success-color);
+		}
+
+		.status-dot.offline {
+			background-color: var(--error-color);
+			box-shadow: 0 0 8px var(--error-color);
+		}
+
+		/* Configuration Modal */
+		.modal {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(15, 23, 42, 0.8);
+			backdrop-filter: blur(12px);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			z-index: 1000;
+			padding: 20px;
+			opacity: 0;
+			pointer-events: none;
+			transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		}
+
+		.modal.open {
+			opacity: 1;
+			pointer-events: auto;
+		}
+
+		.modal-content {
+			background: #1e293b;
+			border: 1px solid var(--glass-border);
+			box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+			border-radius: 24px;
+			width: 100%;
+			max-width: 460px;
+			padding: 28px;
+			display: flex;
+			flex-direction: column;
+			gap: 20px;
+			transform: scale(0.95);
+			transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+		}
+
+		.modal.open .modal-content {
+			transform: scale(1);
+		}
+
+		.modal-header h2 {
+			font-size: 18px;
+			font-weight: 600;
+		}
+
+		.modal-header p {
+			font-size: 12px;
+			color: var(--text-secondary);
+			margin-top: 4px;
+		}
+
+		.input-group {
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.input-group label {
+			font-size: 12px;
+			font-weight: 500;
+			color: var(--text-secondary);
+		}
+
+		input[type="text"], input[type="password"] {
+			background: rgba(15, 23, 42, 0.6);
+			border: 1px solid var(--glass-border);
+			color: var(--text-primary);
+			padding: 12px 16px;
+			border-radius: 12px;
+			font-size: 13px;
+			outline: none;
+			transition: all 0.2s;
+			width: 100%;
+		}
+
+		input[type="text"]:focus, input[type="password"]:focus {
+			border-color: var(--primary-color);
+			box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+			background: rgba(15, 23, 42, 0.8);
+		}
+
+		.modal-actions {
+			display: flex;
+			gap: 12px;
+			margin-top: 10px;
+		}
+
+		/* Loading Spinner overlay */
+		.loader-overlay {
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			background: rgba(0, 0, 0, 0.7);
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 12px;
+			z-index: 5;
+			border-radius: 20px;
+			opacity: 1;
+			transition: opacity 0.3s;
+		}
+
+		.hidden {
+			display: none !important;
+		}
+
+		.spinner {
+			width: 36px;
+			height: 36px;
+			border: 3px solid rgba(255, 255, 255, 0.1);
+			border-top-color: var(--primary-color);
+			border-radius: 50%;
+			animation: spin 1s linear infinite;
+		}
+
+		@keyframes spin {
+			to { transform: rotate(360deg); }
+		}
+
+		.loader-text {
+			font-size: 12px;
+			color: var(--text-secondary);
+		}
+
+		/* Voice animation wave */
+		.voice-wave {
+			display: none;
+			align-items: center;
+			justify-content: center;
+			gap: 4px;
+			height: 24px;
+		}
+
+		.voice-wave.active {
+			display: flex;
+		}
+
+		.bar {
+			width: 3px;
+			height: 6px;
+			background-color: var(--primary-color);
+			border-radius: 3px;
+			animation: bounce 0.8s ease-in-out infinite alternate;
+		}
+
+		.bar:nth-child(2) { animation-delay: 0.15s; }
+		.bar:nth-child(3) { animation-delay: 0.3s; }
+		.bar:nth-child(4) { animation-delay: 0.45s; }
+		.bar:nth-child(5) { animation-delay: 0.6s; }
+
+		@keyframes bounce {
+			from { height: 6px; }
+			to { height: 24px; }
+		}
+	</style>
+</head>
+<body>
+
+	<div class="app-container">
+		<header>
+			<div class="title-area">
+				<h1>Kamera Gözcüsü</h1>
+				<p>Kurulumsuz Web İzleme Dashboard'u</p>
+			</div>
+			<div class="controls-top">
+				<!-- Camera Select Selector -->
+				<select id="camera-select">
+					<option value="" disabled selected>Kamera Yükleniyor...</option>
+				</select>
+				<button id="settings-btn" class="icon-btn" title="Ayarlar">⚙️</button>
+			</div>
+		</header>
+
+		<main class="main-content">
+			<!-- Video Player -->
+			<div class="video-card">
+				<div id="video-loader" class="loader-overlay">
+					<div class="spinner"></div>
+					<div class="loader-text">Home Assistant Akışı Başlatılıyor...</div>
+				</div>
+				<div class="video-overlay">
+					<span class="badge badge-live">Canlı</span>
+					<span id="cam-name-badge" class="badge badge-status">Kapı Kamerası</span>
+				</div>
+				<!-- Canvas or image for periodic refresh stream -->
+				<img id="video-stream" class="video-stream" src="" alt="Kamera Akışı Bekleniyor...">
+			</div>
+
+			<!-- Sidebar Actions -->
+			<div class="sidebar-card">
+				<div class="controls-group">
+					<button id="unlock-outer-btn" class="btn btn-success">
+						<span>🔓</span> Dış Kapıyı Aç
+					</button>
+					<button id="unlock-inner-btn" class="btn btn-success">
+						<span>🚪</span> İç Kapıyı Aç
+					</button>
+				</div>
+				
+				<div class="controls-group">
+					<button id="talk-btn" class="btn btn-secondary">
+						<span>🎤</span> Konuşmayı Başlat
+					</button>
+					<div id="talk-wave" class="voice-wave">
+						<div class="bar"></div>
+						<div class="bar"></div>
+						<div class="bar"></div>
+						<div class="bar"></div>
+						<div class="bar"></div>
+					</div>
+				</div>
+			</div>
+		</main>
+
+		<!-- Footer Status Bar -->
+		<footer class="status-footer">
+			<div class="status-indicator">
+				<div id="status-dot" class="status-dot"></div>
+				<span id="status-text">Bağlantı kesildi</span>
+			</div>
+			<div>HA Link: <span id="ha-link-text">ev.local</span></div>
+		</footer>
+	</div>
+
+	<!-- Setup / Credentials Modal -->
+	<div id="setup-modal" class="modal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>Home Assistant Bağlantısı</h2>
+				<p>Canlı akış ve kilitler için bilgilerinizi girin.</p>
+			</div>
+			
+			<div class="input-group">
+				<label for="ha-url-input">Home Assistant URL Adresi</label>
+				<input type="text" id="ha-url-input" placeholder="http://ev.local:8123" value="http://ev.local:8123">
+			</div>
+
+			<div class="input-group">
+				<label for="ha-token-input">Uzun Ömürlü Erişim Tokenı (Long-Lived Access Token)</label>
+				<input type="password" id="ha-token-input" placeholder="Tokenınızı buraya yapıştırın">
+			</div>
+
+			<div class="modal-actions">
+				<button id="save-credentials-btn" class="btn">Bilgileri Kaydet</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// --- State ---
+		let haUrl = localStorage.getItem('ha_url') || 'http://ev.local:8123';
+		let haToken = localStorage.getItem('ha_token') || '';
+		let activeCamera = localStorage.getItem('active_camera') || '';
+		let camerasList = [];
+		let streamInterval = null;
+		let isStreaming = false;
+
+		// --- DOM Elements ---
+		const setupModal = document.getElementById('setup-modal');
+		const settingsBtn = document.getElementById('settings-btn');
+		const saveCredentialsBtn = document.getElementById('save-credentials-btn');
+		const haUrlInput = document.getElementById('ha-url-input');
+		const haTokenInput = document.getElementById('ha-token-input');
+		
+		const cameraSelect = document.getElementById('camera-select');
+		const videoStream = document.getElementById('video-stream');
+		const videoLoader = document.getElementById('video-loader');
+		const camNameBadge = document.getElementById('cam-name-badge');
+		
+		const unlockOuterBtn = document.getElementById('unlock-outer-btn');
+		const unlockInnerBtn = document.getElementById('unlock-inner-btn');
+		
+		const talkBtn = document.getElementById('talk-btn');
+		const talkWave = document.getElementById('talk-wave');
+		
+		const statusDot = document.getElementById('status-dot');
+		const statusText = document.getElementById('status-text');
+		const haLinkText = document.getElementById('ha-link-text');
+
+		// Hardcoded fallback/default entity guesses (will match environment if token fails)
+		const DOOR_OUTER_ENTITY = 'switch.dis_kapi_kontrol_dis_kapi';
+		const DOOR_INNER_ENTITY = 'switch.dis_kapi_kontrol_ic_kapi';
+
+		// --- Initialization ---
+		function init() {
+			haUrlInput.value = haUrl;
+			haTokenInput.value = haToken;
+			haLinkText.textContent = haUrl;
+
+			if (!haToken) {
+				// Show configuration modal immediately if credentials are missing
+				setupModal.classList.add('open');
+			} else {
+				connectToHA();
+			}
+		}
+
+		// --- Home Assistant Connection & API Actions ---
+		async function connectToHA() {
+			updateConnectionStatus('connecting', 'Bağlantı kuruluyor...');
+			
+			try {
+				// Test connection & Fetch active entities
+				const response = await fetch(`${haUrl}/api/states`, {
+					headers: {
+						'Authorization': `Bearer ${haToken}`,
+						'Content-Type': 'application/json'
+					}
+				});
+
+				if (!response.ok) throw new Error('Token geçersiz veya sunucu yanıt vermiyor.');
+
+				const entities = await response.json();
+				updateConnectionStatus('online', 'Home Assistant Bağlantısı Aktif');
+				
+				// Extract cameras
+				camerasList = entities.filter(e => e.entity_id.startsWith('camera.'));
+				
+				populateCameraDropdown();
+				
+				if (camerasList.length > 0) {
+					// Load saved camera, or fall back to the first discovered camera
+					const foundCam = camerasList.find(c => c.entity_id === activeCamera);
+					const selectedCam = foundCam ? foundCam.entity_id : camerasList[0].entity_id;
+					cameraSelect.value = selectedCam;
+					startCameraStream(selectedCam);
+				} else {
+					videoLoader.querySelector('.loader-text').textContent = 'Kamera varlığı bulunamadı!';
+					videoLoader.querySelector('.spinner').classList.add('hidden');
+				}
+
+			} catch (error) {
+				console.error(error);
+				updateConnectionStatus('offline', 'Bağlantı Hatası! Bilgileri kontrol edin.');
+				setupModal.classList.add('open');
+			}
+		}
+
+		function updateConnectionStatus(state, message) {
+			statusText.textContent = message;
+			statusDot.className = 'status-dot';
+			if (state === 'online') {
+				statusDot.classList.add('online');
+			} else if (state === 'offline') {
+				statusDot.classList.add('offline');
+			}
+		}
+
+		function populateCameraDropdown() {
+			if (camerasList.length === 0) {
+				cameraSelect.innerHTML = '<option value="" disabled>Kamera bulunamadı</option>';
+				return;
+			}
+			
+			cameraSelect.innerHTML = camerasList.map(c => 
+				`<option value="${c.entity_id}">${c.attributes.friendly_name || c.entity_id}</option>`
+			).join('');
+		}
+
+		// --- Camera Streaming Loop (High Fidelity authenticated refresh stream) ---
+		function startCameraStream(entityId) {
+			if (streamInterval) clearInterval(streamInterval);
+			isStreaming = true;
+			activeCamera = entityId;
+			localStorage.setItem('active_camera', entityId);
+
+			const selectedCamObj = camerasList.find(c => c.entity_id === entityId);
+			camNameBadge.textContent = selectedCamObj ? (selectedCamObj.attributes.friendly_name || entityId) : entityId;
+
+			videoLoader.classList.remove('hidden');
+			videoLoader.querySelector('.loader-text').textContent = 'Görüntü aktarılıyor...';
+			videoLoader.querySelector('.spinner').classList.remove('hidden');
+
+			// Fetch one frame immediately to hide loader faster
+			fetchFrame(entityId);
+
+			// Refresh image frames every 150ms (Approx ~7 fps)
+			streamInterval = setInterval(() => {
+				if (isStreaming) fetchFrame(entityId);
+			}, 150);
+		}
+
+		async function fetchFrame(entityId) {
+			try {
+				const response = await fetch(`${haUrl}/api/camera_proxy/${entityId}`, {
+					headers: {
+						'Authorization': `Bearer ${haToken}`
+					}
+				});
+				
+				if (!response.ok) throw new Error('Frame error');
+
+				const blob = await response.blob();
+				const oldUrl = videoStream.src;
+				
+				videoStream.src = URL.createObjectURL(blob);
+				videoLoader.classList.add('hidden'); // Hide loader on first successful frame
+
+				// Clean up memory leaks from old object URLs
+				if (oldUrl.startsWith('blob:')) {
+					URL.revokeObjectURL(oldUrl);
+				}
+			} catch (e) {
+				console.error('Frame fetch failed:', e);
+			}
+		}
+
+		// --- Door Unlock Service Actions ---
+		async function triggerDoor(entityId, btn, displayName) {
+			if (btn.disabled) return;
+			const originalHtml = btn.innerHTML;
+			
+			btn.disabled = true;
+			btn.innerHTML = '<span>⏳</span> İstek yollanıyor...';
+
+			try {
+				const response = await fetch(`${haUrl}/api/services/switch/turn_on`, {
+					method: 'POST',
+					headers: {
+						'Authorization': `Bearer ${haToken}`,
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ entity_id: entityId })
+				});
+
+				if (!response.ok) throw new Error('API request failed');
+
+				btn.innerHTML = `<span>✅</span> ${displayName} Açıldı`;
+				btn.style.background = '#059669'; // Success green splash
+
+			} catch (error) {
+				console.error('Unlock error:', error);
+				btn.innerHTML = '<span>⚠️</span> Başarısız!';
+				btn.style.background = '#dc2626'; // Red splash
+			}
+
+			// Fast reset UI to normal state
+			setTimeout(() => {
+				btn.innerHTML = originalHtml;
+				btn.disabled = false;
+				btn.style.background = ''; // Restore stylesheet default
+			}, 1500);
+		}
+
+		// --- Event Listeners ---
+		settingsBtn.addEventListener('click', () => {
+			setupModal.classList.add('open');
+		});
+
+		saveCredentialsBtn.addEventListener('click', () => {
+			const enteredUrl = haUrlInput.value.trim().replace(/\/$/, ""); // Remove trailing slash
+			const enteredToken = haTokenInput.value.trim();
+
+			if (!enteredUrl || !enteredToken) {
+				alert('Lütfen tüm alanları doldurun!');
+				return;
+			}
+
+			haUrl = enteredUrl;
+			haToken = enteredToken;
+			localStorage.setItem('ha_url', enteredUrl);
+			localStorage.setItem('ha_token', enteredToken);
+			haLinkText.textContent = enteredUrl;
+
+			setupModal.classList.remove('open');
+			connectToHA();
+		});
+
+		cameraSelect.addEventListener('change', (e) => {
+			startCameraStream(e.target.value);
+		});
+
+		unlockOuterBtn.addEventListener('click', (e) => {
+			triggerDoor(DOOR_OUTER_ENTITY, e.currentTarget, 'Dış Kapı');
+		});
+
+		unlockInnerBtn.addEventListener('click', (e) => {
+			triggerDoor(DOOR_INNER_ENTITY, e.currentTarget, 'İç Kapı');
+		});
+
+		// Dynamic mic intercom animation trigger (Fidelity details)
+		let isTalking = false;
+		talkBtn.addEventListener('click', () => {
+			isTalking = !isTalking;
+			if (isTalking) {
+				talkBtn.innerHTML = '<span>🛑</span> Konuşmayı Kapat';
+				talkBtn.classList.add('btn-secondary');
+				talkWave.classList.add('active');
+			} else {
+				talkBtn.innerHTML = '<span>🎤</span> Konuşmayı Başlat';
+				talkBtn.classList.remove('btn-secondary');
+				talkWave.classList.remove('active');
+			}
+		});
+
+		// Start application
+		init();
+	</script>
+</body>
+</html>

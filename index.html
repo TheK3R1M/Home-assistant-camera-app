@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Kamera Gözcüsü</title>
+	<link rel="stylesheet" href="styles.css">
+	<!-- Google Fonts -->
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+	<div class="app-container">
+		<!-- Window Drag Header (Apple style drag area) -->
+		<header class="window-drag-area">
+			<div class="window-controls">
+				<button id="minimize-btn" class="icon-btn" title="Küçült">_</button>
+				<button id="close-btn" class="icon-btn" title="Kapat">✕</button>
+			</div>
+		</header>
+
+		<!-- Onboarding Wizard Overlay -->
+		<div id="onboarding-wizard" class="modal hidden">
+			<div class="modal-content" style="min-height: 480px; width: 460px;">
+				<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+					<h2 style="margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.3px;">Kamera Gözcüsü Kurulumu</h2>
+					<div class="wizard-steps-indicator" style="display: flex; gap: 8px; align-items: center;">
+						<span class="step-dot active" data-step="1" style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary-color); display: inline-block; transition: all 0.3s;"></span>
+						<span class="step-dot" data-step="2" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); display: inline-block; transition: all 0.3s;"></span>
+						<span class="step-dot" data-step="3" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); display: inline-block; transition: all 0.3s;"></span>
+					</div>
+				</div>
+				
+				<div class="modal-body" style="flex: 1; display: flex; flex-direction: column;">
+					<!-- Step 1: Home Assistant -->
+					<div id="wizard-step-1" class="wizard-step">
+						<h3 style="font-size: 13px; font-weight: 600; color: var(--primary-color); margin-bottom: 8px;">Adım 1: Home Assistant Bağlantısı</h3>
+						<p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">Cihazlarınızı ve zil bildirimlerini yönetmek için Home Assistant bağlantı bilgilerinizi girin.</p>
+						
+						<div class="setting-group">
+							<label for="wizard-ha-url">Home Assistant URL:</label>
+							<input type="text" id="wizard-ha-url" placeholder="http://ev.local:8123" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box;">
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="wizard-ha-token">Uzun Ömürlü Erişim Jetonu (Token):</label>
+							<input type="password" id="wizard-ha-token" placeholder="Long-Lived Access Token..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box;">
+							<span style="font-size: 9.5px; color: rgba(255,255,255,0.3); display: block; margin-top: 4px;">HA Profil sayfanızın en altından token alabilirsiniz.</span>
+						</div>
+					</div>
+
+					<!-- Step 2: RTSP & Monitor -->
+					<div id="wizard-step-2" class="wizard-step hidden">
+						<h3 style="font-size: 13px; font-weight: 600; color: var(--primary-color); margin-bottom: 8px;">Adım 2: Yayın & Ekran Ayarları</h3>
+						<p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">IP Kameralarınızın akış adresini ve uygulamanın görüntüleneceği hedef ekranı seçin.</p>
+						
+						<div class="setting-group">
+							<label for="wizard-rtsp-url">RTSP Akış Adresi (NVR/Kamera):</label>
+							<input type="text" id="wizard-rtsp-url" placeholder="rtsp://kullanici:sifre@ip:port/cam/realmonitor" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box;">
+							<span style="font-size: 9.5px; color: rgba(255,255,255,0.3); display: block; margin-top: 4px;">Zil çaldığında gösterilecek kamera akış yolu.</span>
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="wizard-display-select">Uygulamanın Açılacağı Ekran:</label>
+							<select id="wizard-display-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(15, 23, 42, 0.6); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; cursor: pointer;">
+								<option value="0">Varsayılan Ekran</option>
+							</select>
+							<span style="font-size: 9.5px; color: rgba(255,255,255,0.3); display: block; margin-top: 4px;">Tetiklenme halinde uygulamanın yansıtılacağı ikincil ekranınız.</span>
+						</div>
+					</div>
+
+					<!-- Step 3: AI & Behavior -->
+					<div id="wizard-step-3" class="wizard-step hidden">
+						<h3 style="font-size: 13px; font-weight: 600; color: var(--primary-color); margin-bottom: 8px;">Adım 3: Yapay Zeka & Alarm Ayarları</h3>
+						<p style="font-size: 11.5px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 16px;">Yapay zekanın insan algılama parametrelerini ve olay tetiklenme eylemlerini yapılandırın.</p>
+						
+						<div class="setting-group">
+							<div style="display: flex; justify-content: space-between; align-items: center;">
+								<label for="wizard-ai-sensitivity">AI Algılama Hassasiyeti:</label>
+								<span id="wizard-ai-sensitivity-val" style="font-size: 12px; font-weight: 600; color: var(--primary-color);">%55</span>
+							</div>
+							<input type="range" id="wizard-ai-sensitivity" min="30" max="90" value="55" class="glass-slider" style="width: 100%; margin-top: 6px;">
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="wizard-ai-min-size">Minimum İnsan Bounding Box Boyutu:</label>
+							<select id="wizard-ai-min-size" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(15, 23, 42, 0.6); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; cursor: pointer;">
+								<option value="0.02">Uzak / Küçük (Ekranın %2'si)</option>
+								<option value="0.04" selected>Normal / Orta (Ekranın %4'ü - Önerilen)</option>
+								<option value="0.08">Yakın / Büyük (Ekranın %8'i)</option>
+							</select>
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label>Zil Tetiklendiğinde Pencere Davranışı:</label>
+							<div class="radio-group" style="margin-top: 6px;">
+								<label>
+									<input type="radio" name="wizard-doorbell-action" value="open" checked>
+									Pencereyi Otomatik Uyandır ve Göster
+								</label>
+								<label>
+									<input type="radio" name="wizard-doorbell-action" value="notify">
+									Sadece Sistem Bildirimi Gönder
+								</label>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="modal-actions" style="margin-top: 16px; display: flex; gap: 8px;">
+					<button id="wizard-prev-btn" class="action-btn secondary hidden" style="flex: 1; justify-content: center; border-radius: 10px; padding: 12px; background: rgba(255,255,255,0.04);">Geri</button>
+					<button id="wizard-next-btn" class="action-btn" style="flex: 2; justify-content: center; border-radius: 10px; padding: 12px; background: var(--primary-color); font-weight: 600;">İleri</button>
+					<button id="wizard-finish-btn" class="action-btn hidden" style="flex: 2; justify-content: center; border-radius: 10px; padding: 12px; background: var(--success-color); font-weight: 600;">Kurulumu Tamamla</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Settings Modal -->
+		<div id="settings-modal" class="modal hidden">
+			<div class="modal-content">
+				<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+					<h2 style="margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.3px;">Gelişmiş Ayarlar</h2>
+					<button id="close-settings-btn" class="icon-btn" style="font-size: 12px; padding: 4px;" title="Kapat">✕</button>
+				</div>
+				<div class="modal-body">
+					<!-- Section: Home Assistant -->
+					<div class="settings-section" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 16px;">
+						<h3 style="font-size: 11px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">Home Assistant Bağlantısı</h3>
+						<div class="setting-group">
+							<label for="ha-url-input">Home Assistant URL:</label>
+							<input type="text" id="ha-url-input" placeholder="http://ev.local:8123" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="ha-token-input">Uzun Ömürlü Erişim Jetonu (Token):</label>
+							<input type="password" id="ha-token-input" placeholder="Long-Lived Access Token..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
+						</div>
+					</div>
+
+					<!-- Section: Akış & Monitör -->
+					<div class="settings-section" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 16px;">
+						<h3 style="font-size: 11px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">Yayın & Ekran Ayarları</h3>
+						<div class="setting-group">
+							<label for="rtsp-url-input">RTSP Akış Adresi (Kamera):</label>
+							<input type="text" id="rtsp-url-input" placeholder="rtsp://kullanici:sifre@ip:port/cam/realmonitor" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="display-select">Hedef Gösterim Ekranı:</label>
+							<select id="display-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(15, 23, 42, 0.6); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; cursor: pointer; transition: all 0.2s;">
+								<option value="0">Varsayılan Ekran</option>
+							</select>
+						</div>
+					</div>
+
+					<!-- Section: Varlıklar -->
+					<div class="settings-section" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 16px;">
+						<h3 style="font-size: 11px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">Home Assistant Varlıkları</h3>
+						<div class="setting-group">
+							<label for="doorbell-entity-input">Zil Varlık Kimliği (Doorbell Sensor):</label>
+							<input type="text" id="doorbell-entity-input" placeholder="binary_sensor.doorbell" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="door-outer-entity-input">Dış Kapı Kontrol Kimliği (Switch):</label>
+							<input type="text" id="door-outer-entity-input" placeholder="switch.dis_kapi_kontrol_dis_kapi" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="door-inner-entity-input">İç Kapı Kontrol Kimliği (Switch):</label>
+							<input type="text" id="door-inner-entity-input" placeholder="switch.dis_kapi_kontrol_ic_kapi" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
+						</div>
+					</div>
+
+					<!-- Section: Yapay Zeka -->
+					<div class="settings-section" style="margin-bottom: 20px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 16px;">
+						<h3 style="font-size: 11px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">Yapay Zeka (AI) Algılama Ayarları</h3>
+						<div class="setting-group">
+							<div style="display: flex; justify-content: space-between; align-items: center;">
+								<label for="ai-sensitivity-input">AI Algılama Hassasiyeti:</label>
+								<span id="ai-sensitivity-val" style="font-size: 12px; font-weight: 600; color: var(--primary-color);">%55</span>
+							</div>
+							<input type="range" id="ai-sensitivity-input" min="30" max="90" value="55" class="glass-slider" style="width: 100%; margin-top: 6px;">
+							<span style="font-size: 10px; color: rgba(255,255,255,0.4); display: block; margin-top: 4px;">Düşük değerler daha kolay algılar (gürültüye açık), yüksek değerler kesinlik arar.</span>
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
+							<label for="ai-min-size-select">Filtrelenecek Minimum İnsan Boyutu:</label>
+							<select id="ai-min-size-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(15, 23, 42, 0.6); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; cursor: pointer; transition: all 0.2s;">
+								<option value="0.02">Uzak / Küçük (Ekranın %2'si)</option>
+								<option value="0.04" selected>Normal / Orta (Ekranın %4'ü - Önerilen)</option>
+								<option value="0.08">Yakın / Büyük (Ekranın %8'i)</option>
+							</select>
+							<span style="font-size: 10px; color: rgba(255,255,255,0.4); display: block; margin-top: 4px;">Bu orandan daha küçük algılamalar uzaktaki hareketleri/gürültüleri engellemek için elenir.</span>
+						</div>
+					</div>
+
+					<!-- Section: Davranış -->
+					<div class="settings-section" style="margin-bottom: 12px;">
+						<h3 style="font-size: 11px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">Bildirim ve Tetikleme Davranışı</h3>
+						<div class="setting-group">
+							<div class="radio-group">
+								<label>
+									<input type="radio" name="doorbell-action" value="open" checked>
+									Pencereyi Otomatik Uyandır ve Göster
+								</label>
+								<label>
+									<input type="radio" name="doorbell-action" value="notify">
+									Sadece Sistem Bildirimi Gönder
+								</label>
+							</div>
+						</div>
+					</div>
+					<!-- Section: Ayarları Paylaş / Yedekle -->
+					<div class="settings-section" style="margin-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.05); padding-top: 16px; border-bottom: none; padding-bottom: 0;">
+						<h3 style="font-size: 11px; font-weight: 700; color: var(--primary-color); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 12px;">Ayarları Yedekle & Aktar</h3>
+						<div class="setting-group" style="display: flex; gap: 8px;">
+							<button id="export-settings-btn" class="action-btn secondary" style="flex: 1; justify-content: center; border-radius: 10px; padding: 10px; font-size: 12px; background: rgba(255,255,255,0.04);">
+								<span>📤</span> Ayarları Panoya Kopyala
+							</button>
+							<button id="import-settings-btn" class="action-btn secondary" style="flex: 1; justify-content: center; border-radius: 10px; padding: 10px; font-size: 12px; background: rgba(255,255,255,0.04);">
+								<span>📥</span> Panodan Ayarları Yükle
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="setting-group" style="margin-top: 8px;">
+					<button id="test-doorbell-btn" class="action-btn secondary"
+						style="padding: 10px; font-size: 0.85rem; width: 100%; justify-content: center; border-radius: 10px;">🔔 Zil Tetikleyicisini Test Et</button>
+				</div>
+				<div class="modal-actions" style="margin-top: 12px; display: flex; gap: 8px;">
+					<button id="cancel-settings-btn" class="action-btn secondary" style="flex: 1; justify-content: center; border-radius: 10px; padding: 12px; background: rgba(255,255,255,0.04);">Vazgeç</button>
+					<button id="save-settings-btn" class="action-btn" style="flex: 1; justify-content: center; border-radius: 10px; padding: 12px; background: var(--primary-color); font-weight: 600;">Ayarları Kaydet</button>
+				</div>
+			</div>
+		</div>
+
+		<main>
+			<div class="camera-feed-container">
+				<!-- HLS.js Library -->
+				<script src="./node_modules/hls.js/dist/hls.min.js"></script>
+
+				<!-- TensorFlow.js Safe Loader for Electron Node Integration -->
+				<script>
+					if (typeof module === 'object') {
+						window.tempModule = module;
+						module = undefined;
+					}
+				</script>
+				<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+				<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+				<script>
+					if (window.tempModule) {
+						module = window.tempModule;
+						delete window.tempModule;
+					}
+				</script>
+
+				<!-- AI Face/Object Detection Status Badge Overlay -->
+				<div id="ai-status-badge" class="ai-hud-badge detecting">
+					<span class="spinner-mini"></span> AI Analiz Ediliyor
+				</div>
+
+				<!-- Video Player Container (Single View) -->
+				<div id="video-container-single" class="video-wrapper" style="position: relative;">
+					<div id="loader-single" class="loader-overlay">
+						<div class="loader"></div>
+					</div>
+					<video id="video-stream" class="video-player" autoplay muted playsinline></video>
+					<img id="img-stream-single" class="video-player hidden" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+					<canvas id="canvas-single" class="ai-overlay-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;"></canvas>
+				</div>
+ 
+				<!-- Multi-Camera Grid Container (Dual, Triple, Quad) -->
+				<div id="video-container-grid" class="grid-container grid-dual hidden" style="display:none;">
+					<!-- Slot 1 (Sol Üst / Birincil) -->
+					<div id="slot-1" class="video-slot slot-1">
+						<div id="loader-1" class="loader-overlay hidden">
+							<div class="loader"></div>
+						</div>
+						<div class="slot-header">
+							<span class="slot-label" id="label-1">Kamera 1</span>
+							<select id="cam-select-1" class="slot-select">
+								<option value="">Yükleniyor...</option>
+							</select>
+						</div>
+						<video id="video-1" class="video-player" autoplay muted playsinline></video>
+						<img id="img-stream-1" class="video-player hidden" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+						<canvas id="canvas-1" class="ai-overlay-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;"></canvas>
+					</div>
+					
+					<!-- Slot 2 (Sağ Üst / İkincil) -->
+					<div id="slot-2" class="video-slot slot-2">
+						<div id="loader-2" class="loader-overlay hidden">
+							<div class="loader"></div>
+						</div>
+						<div class="slot-header">
+							<span class="slot-label" id="label-2">Kamera 2</span>
+							<select id="cam-select-2" class="slot-select">
+								<option value="">Yükleniyor...</option>
+							</select>
+						</div>
+						<video id="video-2" class="video-player" autoplay muted playsinline></video>
+						<img id="img-stream-2" class="video-player hidden" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+						<canvas id="canvas-2" class="ai-overlay-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;"></canvas>
+					</div>
+
+					<!-- Slot 3 (Sol Alt / Üçüncül) -->
+					<div id="slot-3" class="video-slot slot-3">
+						<div id="loader-3" class="loader-overlay hidden">
+							<div class="loader"></div>
+						</div>
+						<div class="slot-header">
+							<span class="slot-label" id="label-3">Kamera 3</span>
+							<select id="cam-select-3" class="slot-select">
+								<option value="">Yükleniyor...</option>
+							</select>
+						</div>
+						<video id="video-3" class="video-player" autoplay muted playsinline></video>
+						<img id="img-stream-3" class="video-player hidden" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+						<canvas id="canvas-3" class="ai-overlay-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;"></canvas>
+					</div>
+
+					<!-- Slot 4 (Sağ Alt / Dördüncül) -->
+					<div id="slot-4" class="video-slot slot-4">
+						<div id="loader-4" class="loader-overlay hidden">
+							<div class="loader"></div>
+						</div>
+						<div class="slot-header">
+							<span class="slot-label" id="label-4">Kamera 4</span>
+							<select id="cam-select-4" class="slot-select">
+								<option value="">Yükleniyor...</option>
+							</select>
+						</div>
+						<video id="video-4" class="video-player" autoplay muted playsinline></video>
+						<img id="img-stream-4" class="video-player hidden" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+						<canvas id="canvas-4" class="ai-overlay-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;"></canvas>
+					</div>
+					
+					<!-- Slot 5 (Alt Orta / Beşinci) -->
+					<div id="slot-5" class="video-slot slot-5">
+						<div id="loader-5" class="loader-overlay hidden">
+							<div class="loader"></div>
+						</div>
+						<div class="slot-header">
+							<span class="slot-label" id="label-5">Kamera 5</span>
+							<select id="cam-select-5" class="slot-select">
+								<option value="">Yükleniyor...</option>
+							</select>
+						</div>
+						<video id="video-5" class="video-player" autoplay muted playsinline></video>
+						<img id="img-stream-5" class="video-player hidden" style="display: none; width: 100%; height: 100%; object-fit: contain;">
+						<canvas id="canvas-5" class="ai-overlay-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4;"></canvas>
+					</div>
+					
+					<!-- Slot Widget (Alt Sağ / Kontrol Paneli) -->
+					<div id="slot-widget" class="video-slot slot-widget hidden" style="display: none;">
+						<div class="widget-container">
+							<div class="widget-header">
+								<div class="widget-brand">
+									<img src="icon.png" class="widget-logo" alt="logo">
+									<h3>Kamera Gözcüsü</h3>
+								</div>
+								<div class="widget-header-controls">
+									<select class="mode-select" title="Görünüm Modu">
+										<option value="single">Tekli</option>
+										<option value="dual">İkili</option>
+										<option value="triple">Üçlü Odak</option>
+										<option value="quad">Dörtlü Grid</option>
+										<option value="five">5'li Odak</option>
+									</select>
+									<button class="icon-btn settings-btn" title="Ayarlar">⚙️</button>
+								</div>
+							</div>
+							
+							<div class="widget-divider"></div>
+
+							<div class="widget-header-block">
+								<div id="widget-clock" class="widget-clock">00:00:00</div>
+								<div id="widget-date" class="widget-date">Yükleniyor...</div>
+							</div>
+							
+							<div class="widget-divider"></div>
+							
+							<div class="widget-ai-status">
+								<span class="widget-status-dot"></span>
+								<span class="widget-status-text">AI Gözcü Aktif</span>
+							</div>
+							
+							<div class="widget-quick-actions">
+								<button id="widget-unlock-outer" class="widget-action-btn primary-action">
+									<span>🔓</span> Dış Kapı
+								</button>
+								<button id="widget-unlock-inner" class="widget-action-btn secondary-action">
+									<span>🚪</span> İç Kapı
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<img id="camera-stream" src="" class="hidden" style="display:none;">
+
+				<!-- Recording Indicator -->
+				<div id="rec-indicator" class="rec-indicator hidden">
+					<span class="rec-dot"></span> REC
+				</div>
+
+				<!-- Video HUD Overlay (Play/Pause/Timer) -->
+				<div class="video-overlay">
+					<div class="video-controls">
+						<button id="play-pause-btn" class="control-btn" title="Oynat/Durdur">
+							<span class="icon">⏸</span>
+						</button>
+						<div class="time-display">
+							<span class="live-badge">CANLI</span>
+							<span id="session-timer">00:00:00</span>
+						</div>
+					</div>
+				<!-- Floating controls pill for Dual, Triple, Quad modes -->
+				<div id="floating-controls-pill" class="floating-controls-pill hidden" style="display: none;">
+					<div class="pill-brand">
+						<img src="icon.png" class="pill-logo" alt="logo">
+						<span>Kamera Gözcüsü</span>
+					</div>
+					<select class="mode-select" title="Görünüm Modu">
+						<option value="single">Tekli</option>
+						<option value="dual">İkili</option>
+						<option value="triple">Üçlü Odak</option>
+						<option value="quad">Dörtlü Grid</option>
+						<option value="five">5'li Odak</option>
+					</select>
+					<button class="icon-btn settings-btn" title="Ayarlar">⚙️</button>
+				</div>
+			</div>
+
+			<!-- Footer Kilit & Konuş Kontrolleri -->
+			<div class="controls-container">
+				<div class="controls-left">
+					<div class="footer-brand">
+						<img src="icon.png" class="footer-logo" alt="logo">
+						<h3>Kamera Gözcüsü</h3>
+					</div>
+					<select class="mode-select" title="Görünüm Modu">
+						<option value="single">Tekli</option>
+						<option value="dual">İkili</option>
+						<option value="triple">Üçlü Odak</option>
+						<option value="quad">Dörtlü Grid</option>
+						<option value="five">5'li Odak</option>
+					</select>
+					<select class="camera-select" id="footer-camera-select">
+						<option value="" disabled selected>Kamera Yükleniyor...</option>
+					</select>
+					<button class="icon-btn settings-btn" title="Ayarlar">⚙️</button>
+				</div>
+				<div class="controls-right">
+					<button id="open-outer-btn" class="action-btn unlock">
+						<span class="icon">🔓</span> Dış Kapı
+					</button>
+					<button id="open-inner-btn" class="action-btn unlock secondary-unlock">
+						<span class="icon">🚪</span> İç Kapı
+					</button>
+					<button id="talk-btn" class="action-btn secondary">
+						<span class="icon">🎤</span> <span id="talk-btn-text">Konuş</span>
+						<div id="talk-wave" class="voice-wave hidden" style="display: none;">
+							<div class="bar"></div>
+							<div class="bar"></div>
+							<div class="bar"></div>
+							<div class="bar"></div>
+						</div>
+					</button>
+				</div>
+			</div>
+		</main>
+
+		<!-- Window Status Bar -->
+		<div id="status-bar" class="status-bar">
+			Bağlantı: <span id="connection-status">Sistem Hazırlanıyor...</span>
+		</div>
+
+		<!-- Premium In-App Toast Container -->
+		<div id="toast-container" class="toast-container">
+			<div id="toast-banner" class="toast-banner">
+				<span id="toast-icon" class="toast-icon">🔔</span>
+				<div class="toast-content">
+					<span id="toast-title" class="toast-title">Başlık</span>
+					<span id="toast-body" class="toast-body">Detay metni</span>
+				</div>
+				<button id="toast-close" class="toast-close">✕</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="renderer.js"></script>
+</body>
+
+</html>
