@@ -43,7 +43,7 @@ git commit -m "feat: low-latency streaming and premium UI layout enhancements"
 echo.
 echo GitHub'a pushlaniyor (Ana dal: main)...
 git branch -M main
-git push -u origin main
+git push -f -u origin main
 
 echo.
 echo ==========================================
