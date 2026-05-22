@@ -1264,6 +1264,24 @@ async function openSettingsModal() {
 	document.getElementById('ha-token-input').value = config.HA_TOKEN || '';
 	document.getElementById('rtsp-url-input').value = config.RTSP_URL || '';
 	
+	// Populate individual camera URLs
+	for (let i = 1; i <= 5; i++) {
+		const inputEl = document.getElementById(`rtsp-url-${i}-input`);
+		if (inputEl) {
+			inputEl.value = config[`RTSP_URL_${i}`] || '';
+		}
+	}
+	
+	// Reset Collapsible individual RTSP URLs container
+	const container = document.getElementById('individual-rtsp-container');
+	if (container) {
+		container.style.maxHeight = '0px';
+	}
+	const arrow = document.getElementById('individual-rtsp-arrow');
+	if (arrow) {
+		arrow.style.transform = 'rotate(0deg)';
+	}
+	
 	settingsRadios.forEach(r => {
 		r.checked = (r.value === config.DOORBELL_ACTION);
 	});
@@ -1303,6 +1321,24 @@ async function openSettingsModal() {
 if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
 document.getElementById('close-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
 document.getElementById('cancel-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+// Bind Toggle Individual RTSP URL settings panel click handler
+const toggleIndividualRtspBtn = document.getElementById('toggle-individual-rtsp-btn');
+if (toggleIndividualRtspBtn) {
+	toggleIndividualRtspBtn.addEventListener('click', () => {
+		const container = document.getElementById('individual-rtsp-container');
+		const arrow = document.getElementById('individual-rtsp-arrow');
+		if (container) {
+			if (container.style.maxHeight === '0px' || !container.style.maxHeight) {
+				container.style.maxHeight = '420px'; // Plenty of height for the 5 child fields
+				if (arrow) arrow.style.transform = 'rotate(180deg)';
+			} else {
+				container.style.maxHeight = '0px';
+				if (arrow) arrow.style.transform = 'rotate(0deg)';
+			}
+		}
+	});
+}
 
 const aiSlider = document.getElementById('ai-sensitivity-input');
 const aiSliderVal = document.getElementById('ai-sensitivity-val');
@@ -1393,6 +1429,14 @@ if (saveSettingsBtn) {
 		const haUrl = document.getElementById('ha-url-input').value.trim() || 'http://ev.local:8123';
 		const haToken = document.getElementById('ha-token-input').value.trim();
 		const rtspUrl = document.getElementById('rtsp-url-input').value.trim();
+		
+		// Read specific channel URLs from UI
+		const rtspUrl1 = document.getElementById('rtsp-url-1-input').value.trim();
+		const rtspUrl2 = document.getElementById('rtsp-url-2-input').value.trim();
+		const rtspUrl3 = document.getElementById('rtsp-url-3-input').value.trim();
+		const rtspUrl4 = document.getElementById('rtsp-url-4-input').value.trim();
+		const rtspUrl5 = document.getElementById('rtsp-url-5-input').value.trim();
+		
 		const doorbellEntityInput = document.getElementById('doorbell-entity-input').value.trim() || 'binary_sensor.doorbell';
 		const doorOuterEntityInput = document.getElementById('door-outer-entity-input').value.trim() || 'switch.dis_kapi_kontrol_dis_kapi';
 		const doorInnerEntityInput = document.getElementById('door-inner-entity-input').value.trim() || 'switch.dis_kapi_kontrol_ic_kapi';
@@ -1411,6 +1455,11 @@ if (saveSettingsBtn) {
 			HA_URL: haUrl,
 			HA_TOKEN: haToken,
 			RTSP_URL: rtspUrl,
+			RTSP_URL_1: rtspUrl1,
+			RTSP_URL_2: rtspUrl2,
+			RTSP_URL_3: rtspUrl3,
+			RTSP_URL_4: rtspUrl4,
+			RTSP_URL_5: rtspUrl5,
 			DISPLAY_ID: displayId,
 			DOORBELL_ENTITY: doorbellEntityInput,
 			DOOR_OUTER_ENTITY: doorOuterEntityInput,
@@ -1485,6 +1534,13 @@ if (exportSettingsBtn) {
 			const haUrl = document.getElementById('ha-url-input').value.trim();
 			const haToken = document.getElementById('ha-token-input').value.trim();
 			const rtspUrl = document.getElementById('rtsp-url-input').value.trim();
+			
+			const rtspUrl1 = document.getElementById('rtsp-url-1-input').value.trim();
+			const rtspUrl2 = document.getElementById('rtsp-url-2-input').value.trim();
+			const rtspUrl3 = document.getElementById('rtsp-url-3-input').value.trim();
+			const rtspUrl4 = document.getElementById('rtsp-url-4-input').value.trim();
+			const rtspUrl5 = document.getElementById('rtsp-url-5-input').value.trim();
+			
 			const doorbellEntity = document.getElementById('doorbell-entity-input').value.trim();
 			const doorOuterEntity = document.getElementById('door-outer-entity-input').value.trim();
 			const doorInnerEntity = document.getElementById('door-inner-entity-input').value.trim();
@@ -1507,6 +1563,11 @@ if (exportSettingsBtn) {
 					HA_URL: haUrl,
 					HA_TOKEN: haToken,
 					RTSP_URL: rtspUrl,
+					RTSP_URL_1: rtspUrl1,
+					RTSP_URL_2: rtspUrl2,
+					RTSP_URL_3: rtspUrl3,
+					RTSP_URL_4: rtspUrl4,
+					RTSP_URL_5: rtspUrl5,
 					DOORBELL_ENTITY: doorbellEntity,
 					DOOR_OUTER_ENTITY: doorOuterEntity,
 					DOOR_INNER_ENTITY: doorInnerEntity,
@@ -1581,6 +1642,15 @@ if (importSettingsBtn) {
 			document.getElementById('ha-url-input').value = config.HA_URL || '';
 			document.getElementById('ha-token-input').value = config.HA_TOKEN || '';
 			document.getElementById('rtsp-url-input').value = config.RTSP_URL || '';
+			
+			// Refresh individual camera URLs
+			for (let i = 1; i <= 5; i++) {
+				const inputEl = document.getElementById(`rtsp-url-${i}-input`);
+				if (inputEl) {
+					inputEl.value = config[`RTSP_URL_${i}`] || '';
+				}
+			}
+			
 			document.getElementById('doorbell-entity-input').value = config.DOORBELL_ENTITY || '';
 			document.getElementById('door-outer-entity-input').value = config.DOOR_OUTER_ENTITY || '';
 			document.getElementById('door-inner-entity-input').value = config.DOOR_INNER_ENTITY || '';

@@ -93,6 +93,118 @@ All settings are securely stored locally inside `config.json`. The application h
 
 ---
 
+## 🗺️ Home Assistant Integration & Camera Protocol Roadmap
+
+Integrating IP cameras with Home Assistant and this Desktop Monitor requires aligning camera protocols, network architecture, and latency goals. This guide outlines the available protocols, their technical trade-offs, a step-by-step roadmap to integrate them in Home Assistant, and copy-pasteable configuration templates.
+
+### 1. Camera Protocol Comparison & Trade-Offs
+
+| Protocol | Latency | Bandwidth | CPU / Resource Cost | Web Compatibility | Best For |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **MJPEG** (Motion JPEG) | **⚡ Sub-100ms** | 🔴 Extremely High | 🟡 Medium (High NVR encode) | 🟢 Native (`<img>`) | Ultra-fast local triggers, low-cpu client display. |
+| **RTSP** (Real-Time Streaming) | **🟡 1s - 3s** | 🟢 Extremely Low | 🔴 High (If transcoding) | 🔴 Unsupported natively | NVR storage, native IPCam feeds, server-side processing. |
+| **WebRTC** (Web Real-Time Comm) | **⚡ < 200ms** | 🟢 Extremely Low | 🟢 Very Low | 🟢 Native (via WebRTC API) | Live interactive views, dual-audio streams, mobile access. |
+| **HLS** (HTTP Live Streaming) | 🔴 **3s - 10s** | 🟡 Low | 🟡 Medium (Segment chunking) | 🟢 Native (`<video>`/hls.js) | Public remote access, smart displays, standard casting. |
+
+---
+
+### 2. Multi-Camera Architecture Options
+
+Different camera setups offer different interfaces:
+1. **Dynamic Parameterized Stream**: Some NVR systems (e.g., XMeye, Dahua, Hikvision NVRs) expose a single base IP address and port, routing multiple cameras dynamically via a channel parameter in the URL (e.g., `rtsp://nvr-ip:554/ch=1`, `ch=2`).
+2. **Distinct RTSP Streams**: Standalone IP cameras (e.g., Reolink, Tapo, Sonoff, ESP32-Cam) each have their own distinct IP addresses and completely separate RTSP endpoints.
+
+**Our App Supports Both Modes!**
+- **Fallback Base Mode**: Provide a single `RTSP_URL` in the settings, and the app will dynamically append `channel` numbers (e.g., `/mjpeg?channel=1`).
+- **Individual URL Mode**: Click the **"Configure Individual RTSP URLs"** toggle under Settings to set completely distinct RTSP streams (`RTSP_URL_1` to `RTSP_URL_5`) for each channel slot. This ensures support for heterogeneous setups.
+
+---
+
+### 3. Home Assistant Configuration Templates (`configuration.yaml`)
+
+#### A. Generic RTSP Camera Integration
+Add this to your `configuration.yaml` to integrate standard RTSP streams as Home Assistant camera entities:
+
+```yaml
+camera:
+  - platform: generic
+    name: "Front Door Camera"
+    still_image_url: "http://192.168.1.100/cgi-bin/snapshot.sh?res=low"
+    stream_source: "rtsp://admin:password@192.168.1.100:554//h264Preview_01_main"
+    authentication: digest
+
+  - platform: generic
+    name: "Backyard Camera"
+    still_image_url: "http://192.168.1.101/cgi-bin/snapshot.sh?res=low"
+    stream_source: "rtsp://admin:password@192.168.1.101:554//h264Preview_01_main"
+```
+
+#### B. Low-Latency WebRTC Integration (go2rtc)
+Using **go2rtc** is the recommended way to convert RTSP feeds into real-time WebRTC streams with sub-200ms latency. Install it via the **WebRTC Camera** HACS integration or run it standalone, then configure `go2rtc.yaml`:
+
+```yaml
+streams:
+  front_door:
+    - rtsp://admin:password@192.168.1.100:554/h264Preview_01_main
+    - ffmpeg:front_door#video=copy#audio=opus  # Transcode audio to WebRTC Opus
+  backyard:
+    - rtsp://admin:password@192.168.1.101:554/h264Preview_01_main
+```
+
+Then reference these streams in Home Assistant using generic configs pointing to the go2rtc RTSP proxy ports (default `8554`):
+
+```yaml
+camera:
+  - platform: generic
+    name: "Front Door WebRTC"
+    stream_source: "rtsp://127.0.0.1:8554/front_door"
+  - platform: generic
+    name: "Backyard WebRTC"
+    stream_source: "rtsp://127.0.0.1:8554/backyard"
+```
+
+#### C. MJPEG Camera (Direct Snapshot/Stream)
+If you prefer pure MJPEG streams with no transcoding overhead, pull directly from your camera's HTTP endpoint:
+
+```yaml
+camera:
+  - platform: mjpeg
+    name: "Living Room MJPEG"
+    mjpeg_url: "http://192.168.1.105/mjpeg_stream"
+    still_image_url: "http://192.168.1.105/snapshot.jpg"
+```
+
+---
+
+### 4. Step-by-Step Integration Roadmap
+
+Follow these 4 phases to achieve an optimal multi-camera monitoring experience:
+
+```mermaid
+graph LR
+    P1[Phase 1: Networking] --> P2[Phase 2: HA Integration]
+    P2 --> P3[Phase 3: WebRTC Optimization]
+    P3 --> P4[Phase 4: Monitor Setup]
+```
+
+1. **Phase 1: Secure & IP Bindings**
+   - Assign static DHCP leases to your IP cameras in your router settings.
+   - Set up a sub-stream (lower resolution, e.g., 640x480 or 1280x720) on your cameras. Sub-streams significantly reduce client-side GPU usage and latency during continuous monitoring.
+2. **Phase 2: Integrate into Home Assistant**
+   - Add the generic camera configurations in `configuration.yaml` as shown above.
+   - Restart Home Assistant and verify that the cameras show up in your Lovelace dashboard as `camera.front_door` etc.
+3. **Phase 3: Install go2rtc / WebRTC integration**
+   - Install HACS (Home Assistant Community Store).
+   - Search for and install the **WebRTC Camera** integration (by AlexxIT).
+   - This automatically sets up go2rtc on your system, allowing instant peer-to-peer streaming with no transcoding delay.
+4. **Phase 4: Bind with HA PC Monitor App**
+   - Launch this Desktop App.
+   - Fill in your `HA_URL` and `HA_TOKEN` in the Setup Wizard.
+   - Open Settings, click **"Configure Individual RTSP URLs"** to toggle individual feeds, and copy-paste your camera stream URLs directly.
+   - Align your lock entities (`switch.dis_kapi_kontrol_dis_kapi` etc.) and enjoy sub-100ms notifications, dual lock triggers, and autonomous multi-screen popup controls!
+
+---
+
 ## 📦 Building & Distribution
 
 We have provided ready-to-run automation scripts for convenience:

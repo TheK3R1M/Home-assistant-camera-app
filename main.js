@@ -60,6 +60,12 @@ function loadConfig() {
 	config.HA_URL = config.HA_URL || process.env.HA_URL || 'http://ev.local:8123';
 	config.HA_TOKEN = config.HA_TOKEN || process.env.HA_TOKEN || '';
 	config.RTSP_URL = config.RTSP_URL || process.env.RTSP_URL || 'rtsp://furkan:qweasd@192.168.1.81:554/cam/realmonitor';
+	
+	// Initialize individual channel specific URLs
+	for (let i = 1; i <= 5; i++) {
+		config[`RTSP_URL_${i}`] = config[`RTSP_URL_${i}`] || process.env[`RTSP_URL_${i}`] || '';
+	}
+	
 	config.DISPLAY_ID = config.DISPLAY_ID !== undefined ? parseInt(config.DISPLAY_ID) : parseInt(process.env.DISPLAY_ID || '0');
 	config.DOORBELL_ENTITY = config.DOORBELL_ENTITY || process.env.DOORBELL_ENTITY || 'binary_sensor.doorbell';
 	config.DOOR_OUTER_ENTITY = config.DOOR_OUTER_ENTITY || process.env.DOOR_OUTER_ENTITY || 'switch.dis_kapi_kontrol_dis_kapi';
@@ -67,6 +73,36 @@ function loadConfig() {
 	config.DOORBELL_ACTION = config.DOORBELL_ACTION || 'open';
 	config.AI_SENSITIVITY = config.AI_SENSITIVITY !== undefined ? parseFloat(config.AI_SENSITIVITY) : parseFloat(process.env.AI_SENSITIVITY || '0.55');
 	config.AI_MIN_BOX_SIZE = config.AI_MIN_BOX_SIZE !== undefined ? parseFloat(config.AI_MIN_BOX_SIZE) : parseFloat(process.env.AI_MIN_BOX_SIZE || '0.04');
+}
+
+function resolveRtspUrl(channel) {
+	if (!channel) return '';
+	
+	// If it is a direct Home Assistant camera entity, return empty string
+	if (channel.startsWith('camera.')) {
+		return '';
+	}
+
+	// Extract numerical channel ID if prefix rtsp_ is present
+	const channelNum = channel.startsWith('rtsp_') ? channel.replace('rtsp_', '') : channel;
+
+	// Check if a specific URL is configured for this specific channel
+	const specificUrl = config[`RTSP_URL_${channelNum}`];
+	if (specificUrl && specificUrl.trim() !== '') {
+		console.log(`[RTSP Resolution] Using specific URL for Channel ${channelNum}: ${specificUrl}`);
+		return specificUrl.trim();
+	}
+
+	// Fallback to base RTSP URL with dynamic channel parameter replacement
+	let tspUrl = config.RTSP_URL || '';
+	if (tspUrl.includes('channel=')) {
+		tspUrl = tspUrl.replace(/channel=\d+/, `channel=${channelNum}`);
+	} else {
+		const separator = tspUrl.includes('?') ? '&' : '?';
+		tspUrl = `${tspUrl}${separator}channel=${channelNum}&subtype=1&q=5`;
+	}
+	console.log(`[RTSP Resolution] Using base fallback URL for Channel ${channelNum}: ${tspUrl}`);
+	return tspUrl;
 }
 
 function saveConfig(newConfig) {
@@ -148,14 +184,8 @@ const startHlsStream = (channel) => {
 	// Extract numerical channel ID if prefix rtsp_ is present
 	const channelNum = channel.startsWith('rtsp_') ? channel.replace('rtsp_', '') : channel;
 
-	// Construct RTSP URL
-	let tspUrl = config.RTSP_URL || '';
-	if (tspUrl.includes('channel=')) {
-		tspUrl = tspUrl.replace(/channel=\d+/, `channel=${channelNum}`);
-	} else {
-		const separator = tspUrl.includes('?') ? '&' : '?';
-		tspUrl = `${tspUrl}${separator}channel=${channelNum}&subtype=1&q=5`;
-	}
+	// Construct RTSP URL using our helper
+	const tspUrl = resolveRtspUrl(channel);
 
 	console.log(`Starting HLS for Channel ${channel} (NVR Port ${channelNum}): ${tspUrl}`);
 
@@ -220,14 +250,8 @@ const streamServer = http.createServer((req, res) => {
 		const channel = url.searchParams.get('channel') || '1';
 		const channelNum = channel.startsWith('rtsp_') ? channel.replace('rtsp_', '') : channel;
 
-		// Resolve RTSP URL
-		let tspUrl = config.RTSP_URL || '';
-		if (tspUrl.includes('channel=')) {
-			tspUrl = tspUrl.replace(/channel=\d+/, `channel=${channelNum}`);
-		} else {
-			const separator = tspUrl.includes('?') ? '&' : '?';
-			tspUrl = `${tspUrl}${separator}channel=${channelNum}&subtype=1&q=5`;
-		}
+		// Resolve RTSP URL using helper
+		const tspUrl = resolveRtspUrl(channel);
 
 		console.log(`[MJPEG] Direct low-latency request for Channel ${channelNum}: ${tspUrl}`);
 
@@ -454,12 +478,23 @@ ipcMain.handle('get-config', () => {
 ipcMain.handle('save-config', (event, newConfig) => {
 	const oldDisplayId = config.DISPLAY_ID;
 	const oldRtspUrl = config.RTSP_URL;
+	const oldSpecificUrls = {};
+	for (let i = 1; i <= 5; i++) {
+		oldSpecificUrls[`RTSP_URL_${i}`] = config[`RTSP_URL_${i}`] || '';
+	}
 	
 	saveConfig(newConfig);
 	
-	// If RTSP URL changed, restart active HLS streams
-	if (config.RTSP_URL !== oldRtspUrl) {
-		console.log("RTSP URL changed, restarting active streams...");
+	// If RTSP URL or any specific channel URL changed, restart active HLS streams
+	let rtspChanged = config.RTSP_URL !== oldRtspUrl;
+	for (let i = 1; i <= 5; i++) {
+		if ((config[`RTSP_URL_${i}`] || '') !== oldSpecificUrls[`RTSP_URL_${i}`]) {
+			rtspChanged = true;
+		}
+	}
+	
+	if (rtspChanged) {
+		console.log("RTSP URL configuration changed, restarting active streams...");
 		Object.keys(activeCommands).forEach(ch => {
 			stopChannel(ch);
 			startHlsStream(ch);

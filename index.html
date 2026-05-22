@@ -143,6 +143,34 @@
 							<input type="text" id="rtsp-url-input" placeholder="rtsp://user:password@ip:port/cam/realmonitor" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
 						</div>
 						<div class="setting-group" style="margin-top: 12px;">
+							<button id="toggle-individual-rtsp-btn" class="action-btn secondary" type="button" style="width: 100%; justify-content: space-between; border-radius: 10px; padding: 10px 14px; font-size: 12px; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.15);">
+								<span>Configure Individual Camera URLs</span>
+								<span id="individual-rtsp-arrow" style="transition: transform 0.3s; display: inline-block;">▼</span>
+							</button>
+						</div>
+						<div id="individual-rtsp-container" style="max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; display: flex; flex-direction: column; gap: 8px; margin-top: 8px; padding-left: 8px; border-left: 2px solid var(--primary-color);">
+							<div class="setting-subgroup">
+								<label for="rtsp-url-1-input" style="font-size: 11px; color: var(--text-secondary);">Channel 1 Specific URL:</label>
+								<input type="text" id="rtsp-url-1-input" placeholder="Use Base Fallback (Channel 1)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.03); color: var(--text-primary); font-size: 12px; outline: none; margin-top: 2px; box-sizing: border-box;">
+							</div>
+							<div class="setting-subgroup">
+								<label for="rtsp-url-2-input" style="font-size: 11px; color: var(--text-secondary);">Channel 2 Specific URL:</label>
+								<input type="text" id="rtsp-url-2-input" placeholder="Use Base Fallback (Channel 2)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.03); color: var(--text-primary); font-size: 12px; outline: none; margin-top: 2px; box-sizing: border-box;">
+							</div>
+							<div class="setting-subgroup">
+								<label for="rtsp-url-3-input" style="font-size: 11px; color: var(--text-secondary);">Channel 3 Specific URL:</label>
+								<input type="text" id="rtsp-url-3-input" placeholder="Use Base Fallback (Channel 3)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.03); color: var(--text-primary); font-size: 12px; outline: none; margin-top: 2px; box-sizing: border-box;">
+							</div>
+							<div class="setting-subgroup">
+								<label for="rtsp-url-4-input" style="font-size: 11px; color: var(--text-secondary);">Channel 4 Specific URL:</label>
+								<input type="text" id="rtsp-url-4-input" placeholder="Use Base Fallback (Channel 4)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.03); color: var(--text-primary); font-size: 12px; outline: none; margin-top: 2px; box-sizing: border-box;">
+							</div>
+							<div class="setting-subgroup">
+								<label for="rtsp-url-5-input" style="font-size: 11px; color: var(--text-secondary);">Channel 5 Specific URL:</label>
+								<input type="text" id="rtsp-url-5-input" placeholder="Use Base Fallback (Channel 5)" style="width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.03); color: var(--text-primary); font-size: 12px; outline: none; margin-top: 2px; box-sizing: border-box;">
+							</div>
+						</div>
+						<div class="setting-group" style="margin-top: 12px;">
 							<label for="display-select">Target Display Screen:</label>
 							<select id="display-select" style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(15, 23, 42, 0.6); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; cursor: pointer; transition: all 0.2s;">
 								<option value="0">Default Display</option>
