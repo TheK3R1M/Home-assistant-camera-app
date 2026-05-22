@@ -15,7 +15,8 @@
     },
     "files": [
       "**/*",
-      "!stream/**/*"
+      "!stream/**/*",
+      "!.env"
     ],
     "win": {
       "target": "nsis",

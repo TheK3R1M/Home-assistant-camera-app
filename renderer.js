@@ -152,7 +152,7 @@ const slots = {
 
 // --- Dynamic Configuration ---
 let config = {
-	HA_URL: 'http://ev.local:8123',
+	HA_URL: 'http://192.168.1.100:8123',
 	HA_TOKEN: '',
 	RTSP_URL: '',
 	DISPLAY_ID: 0,
@@ -163,6 +163,8 @@ let config = {
 	AI_SENSITIVITY: 0.55,
 	AI_MIN_BOX_SIZE: 0.04
 };
+
+let streamPort = 9999;
 
 // --- State ---
 let viewMode = localStorage.getItem('viewMode') || 'single';
@@ -225,6 +227,7 @@ async function init() {
 	// Fetch dynamic configuration from Main Process
 	try {
 		config = await ipcRenderer.invoke('get-config');
+		streamPort = config.STREAM_PORT || 9999;
 		console.log("Renderer loaded configuration:", config);
 	} catch (e) {
 		console.error("Failed to load config via IPC:", e);
@@ -270,14 +273,49 @@ async function init() {
 		openOnboardingWizard();
 	}
 
-	await checkHAConnection();
-	await fetchHAEntities(); // Fetch friendly labels of Home Assistant camera entities
-	connectHAWebSocket();    // Establish real-time Home Assistant events connection
-	loadAIModel();           // Load TensorFlow.js background analysis
-	startTimer();
+	// Wrap each critical initialization task in independent try-catch blocks to prevent UI freeze on HA connection error
+	try {
+		await checkHAConnection();
+	} catch (e) {
+		console.error("Error checking HA connection status:", e);
+	}
+	
+	try {
+		await fetchHAEntities(); // Fetch friendly labels of Home Assistant camera entities
+	} catch (e) {
+		console.error("Error fetching HA entities:", e);
+	}
+	
+	try {
+		connectHAWebSocket();    // Establish real-time Home Assistant events connection
+	} catch (e) {
+		console.error("Error initializing HA WebSocket:", e);
+	}
+	
+	try {
+		loadAIModel();           // Load TensorFlow.js background analysis
+	} catch (e) {
+		console.error("Error initializing AI models:", e);
+	}
+	
+	try {
+		startTimer();
+	} catch (e) {
+		console.error("Error starting timer:", e);
+	}
 
 	// Load streams
-	refreshStreams();
+	try {
+		refreshStreams();
+	} catch (e) {
+		console.error("Error starting camera streams:", e);
+	}
+
+	// Interactive Connection Status (Clicking status opens Settings Dialog directly)
+	if (connectionStatus) {
+		connectionStatus.style.cursor = 'pointer';
+		connectionStatus.addEventListener('click', openSettingsModal);
+	}
 }
 
 function populateAllDropdowns() {
@@ -686,7 +724,7 @@ function setupStreamSource(channelId, role) {
 			};
 			
 			// Zero-lag MJPEG stream directly from main process server
-			imgEl.src = `http://localhost:9999/mjpeg?channel=${channelId}`;
+			imgEl.src = `http://localhost:${streamPort}/mjpeg?channel=${channelId}`;
 		}
 	}
 }
@@ -736,7 +774,7 @@ function setupHlsPlayer(channelId, videoElement, loaderElement, role) {
 
 	if (!Hls.isSupported()) {
 		// Fallback for native HLS (Safari)
-		videoElement.src = `http://localhost:9999/stream/index_${channelId}.m3u8`;
+		videoElement.src = `http://localhost:${streamPort}/stream/index_${channelId}.m3u8`;
 		videoElement.onloadedmetadata = () => {
 			videoElement.play().catch(e => console.log("Native autoplay blocked", e));
 			if (loaderElement) loaderElement.classList.add('hidden');
@@ -774,7 +812,7 @@ function setupHlsPlayer(channelId, videoElement, loaderElement, role) {
 		}
 	});
 
-	const streamUrl = `http://localhost:9999/stream/index_${channelId}.m3u8`;
+	const streamUrl = `http://localhost:${streamPort}/stream/index_${channelId}.m3u8`;
 
 	pollForManifest(streamUrl, () => {
 		// Verify HLS instance wasn't destroyed while polling
@@ -1319,8 +1357,12 @@ async function openSettingsModal() {
 }
 
 if (settingsBtn) settingsBtn.addEventListener('click', openSettingsModal);
-document.getElementById('close-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
-document.getElementById('cancel-settings-btn').addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+const closeSettingsBtn = document.getElementById('close-settings-btn');
+if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
+
+const cancelSettingsBtn = document.getElementById('cancel-settings-btn');
+if (cancelSettingsBtn) cancelSettingsBtn.addEventListener('click', () => settingsModal.classList.add('hidden'));
 
 // Bind Toggle Individual RTSP URL settings panel click handler
 const toggleIndividualRtspBtn = document.getElementById('toggle-individual-rtsp-btn');
@@ -1402,6 +1444,7 @@ if (wizardFinishBtn) {
 		
 		try {
 			config = await ipcRenderer.invoke('save-config', newConfig);
+			streamPort = config.STREAM_PORT || 9999;
 			console.log("Wizard: Configuration written successfully:", config);
 		} catch (e) {
 			console.error("Wizard: Failed to write new config:", e);
@@ -1475,6 +1518,7 @@ if (saveSettingsBtn) {
 		
 		try {
 			config = await ipcRenderer.invoke('save-config', newConfig);
+			streamPort = config.STREAM_PORT || 9999;
 			console.log("Configuration written successfully:", config);
 		} catch (e) {
 			console.error("Failed to write new config:", e);
@@ -2750,3 +2794,9 @@ async function openDoor(entityId, button) {
 
 // Run setup
 init();
+
+// Dynamically sync and update port from config broadcast
+ipcRenderer.on('config-updated', (event, newConfig) => {
+	config = newConfig;
+	streamPort = config.STREAM_PORT || 9999;
+});

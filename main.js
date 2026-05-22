@@ -3,6 +3,26 @@ const path = require('path');
 const fs = require('fs');
 require('dotenv').config();
 
+// Single-Instance Lock to prevent port collision (EADDRINUSE) and tray-restore failures
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+	console.log("Another instance is already running. Quitting.");
+	app.quit();
+	return;
+}
+
+app.on('second-instance', (event, commandLine, workingDirectory) => {
+	// Focus the existing window if user runs installer/app again
+	if (mainWindow) {
+		if (mainWindow.isMinimized()) mainWindow.restore();
+		mainWindow.show();
+		mainWindow.focus();
+		if (process.platform === 'win32') {
+			mainWindow.flashFrame(true);
+		}
+	}
+});
+
 // Startup: Copy premium icon design if present
 try {
 	const srcIcon = path.join(__dirname, 'icon_design_1779380256320.png');
@@ -56,10 +76,10 @@ function loadConfig() {
 		}
 	}
 	
-	// Fallback/Merge with .env or defaults
-	config.HA_URL = config.HA_URL || process.env.HA_URL || 'http://ev.local:8123';
+	// Fallback/Merge with .env or defaults (generic local network defaults)
+	config.HA_URL = config.HA_URL || process.env.HA_URL || 'http://192.168.1.100:8123';
 	config.HA_TOKEN = config.HA_TOKEN || process.env.HA_TOKEN || '';
-	config.RTSP_URL = config.RTSP_URL || process.env.RTSP_URL || 'rtsp://furkan:qweasd@192.168.1.81:554/cam/realmonitor';
+	config.RTSP_URL = config.RTSP_URL || process.env.RTSP_URL || 'rtsp://username:password@192.168.1.100:554/live';
 	
 	// Initialize individual channel specific URLs
 	for (let i = 1; i <= 5; i++) {
@@ -123,31 +143,25 @@ app.commandLine.appendSwitch('disable-chip-rendering');
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disable-http-cache');
 
-// Required for Windows Notifications to work
+// Required for Windows Notifications to work (matching the installer appId to avoid shortcut duplication)
 if (process.platform === 'win32') {
-	app.setAppUserModelId('com.homeassistant.camera');
+	app.setAppUserModelId('com.homeassistant.cameramonitor');
 	
+	// Clean up legacy manual shortcut that caused duplicate programs listing ("Camera Monitor" vs "HA PC Cam Monitor")
 	try {
-		const shortcutPath = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Camera Monitor.lnk');
-		if (!fs.existsSync(shortcutPath)) {
-			shell.writeShortcutLink(shortcutPath, 'create', {
-				target: process.execPath,
-				args: `"${__dirname}"`,
-				appUserModelId: 'com.homeassistant.camera',
-				description: 'Camera Monitor Intelligent Camera Tracking Application',
-				icon: path.join(__dirname, 'icon.png'),
-				iconIndex: 0
-			});
-			console.log("Start menu shortcut created for Windows Notifications:", shortcutPath);
+		const legacyShortcutPath = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Camera Monitor.lnk');
+		if (fs.existsSync(legacyShortcutPath)) {
+			fs.unlinkSync(legacyShortcutPath);
+			console.log("Startup: Removed legacy duplicate shortcut 'Camera Monitor.lnk'");
 		}
 	} catch (e) {
-		console.error("Failed to create start menu shortcut for notifications:", e);
+		console.error("Startup: Failed to remove legacy shortcut:", e);
 	}
 }
 
 // --- Streaming Server ---
 // --- Streaming Server (HLS) ---
-const STREAM_PORT = 9999;
+let streamPort = 9999;
 const streamDir = app.isPackaged
 	? path.join(app.getPath('userData'), 'stream')
 	: path.join(__dirname, 'stream');
@@ -243,7 +257,7 @@ const streamServer = http.createServer((req, res) => {
 	// CORS
 	res.setHeader('Access-Control-Allow-Origin', '*');
 
-	const url = new URL(req.url, `http://localhost:${STREAM_PORT}`);
+	const url = new URL(req.url, `http://localhost:${streamPort}`);
 
 	// MJPEG Ultra-Low Latency streaming endpoint
 	if (url.pathname === '/mjpeg') {
@@ -382,11 +396,23 @@ const streamServer = http.createServer((req, res) => {
 	res.end();
 });
 
-streamServer.listen(STREAM_PORT, () => {
-	console.log(`HLS Server running on port ${STREAM_PORT}`);
-	// Don't auto start, renderer will request. Or start default.
-	startHlsStream('1');
-});
+function startStreamServer(port) {
+	streamServer.once('error', (err) => {
+		if (err.code === 'EADDRINUSE') {
+			console.warn(`Port ${port} in use, trying fallback port ${port - 1}...`);
+			startStreamServer(port - 1);
+		} else {
+			console.error("Stream server initialization error:", err);
+		}
+	});
+	streamServer.listen(port, () => {
+		streamPort = port;
+		console.log(`HLS Server successfully running on port ${streamPort}`);
+		// Don't auto start, renderer will request. Or start default.
+		startHlsStream('1');
+	});
+}
+startStreamServer(streamPort);
 
 
 function createWindow() {
@@ -472,7 +498,7 @@ function toggleAutoLaunch(item) {
 
 // --- IPC Handlers ---
 ipcMain.handle('get-config', () => {
-	return config;
+	return { ...config, STREAM_PORT: streamPort };
 });
 
 ipcMain.handle('save-config', (event, newConfig) => {
@@ -521,7 +547,7 @@ ipcMain.handle('save-config', (event, newConfig) => {
 		mainWindow.webContents.send('config-updated', config);
 	}
 	
-	return config;
+	return { ...config, STREAM_PORT: streamPort };
 });
 
 ipcMain.handle('get-displays', () => {
