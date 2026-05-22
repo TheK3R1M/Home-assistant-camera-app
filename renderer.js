@@ -220,7 +220,7 @@ let previousCamChX = null;
 
 // --- Initialization ---
 async function init() {
-	connectionStatus.textContent = "Sistem Başlatılıyor...";
+	connectionStatus.textContent = "Initializing System...";
 
 	// Fetch dynamic configuration from Main Process
 	try {
@@ -282,8 +282,8 @@ async function init() {
 
 function populateAllDropdowns() {
 	const createOpts = () => {
-		let html = '<optgroup label="Yerel RTSP Kanalları">';
-		for (let i = 1; i <= 5; i++) html += `<option value="rtsp_${i}">Kanal ${i}</option>`;
+		let html = '<optgroup label="Local RTSP Channels">';
+		for (let i = 1; i <= 5; i++) html += `<option value="rtsp_${i}">Channel ${i}</option>`;
 		html += '</optgroup>';
 		return html;
 	};
@@ -388,9 +388,9 @@ function updateWidgetClock() {
 	const seconds = now.getSeconds().toString().padStart(2, '0');
 	clockEl.textContent = `${hours}:${minutes}:${seconds}`;
 
-	// e.g. "21 MAYIS 2026 PERŞEMBE"
+	// e.g. "THURSDAY, MAY 21, 2026"
 	const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-	const dateStr = now.toLocaleDateString('tr-TR', options).toUpperCase();
+	const dateStr = now.toLocaleDateString('en-US', options).toUpperCase();
 	dateEl.textContent = dateStr;
 }
 
@@ -803,7 +803,7 @@ function pollForManifest(url, callback, attempts = 0) {
 
 // --- Active Stream Refresher ---
 function refreshStreams() {
-	connectionStatus.textContent = "Yayınlar Hazırlanıyor...";
+	connectionStatus.textContent = "Preparing Streams...";
 
 	// Show loaders for active containers
 	if (viewMode === 'single') {
@@ -876,7 +876,7 @@ function refreshStreams() {
 			}
 		}
 	});
-	connectionStatus.textContent = "Canlı Yayın Aktif";
+	connectionStatus.textContent = "Live Stream Active";
 }
 
 function jumpToLive() {
@@ -1004,7 +1004,7 @@ for (let i = 2; i <= 5; i++) {
 			// Rebuild streaming connections
 			refreshStreams();
 			
-			showToastNotification('Kamera Değiştirildi', 'Kamera ana ekran ile yer değiştirildi.', '🔄');
+			showToastNotification('Camera Swapped', 'The camera was swapped with the main screen.', '🔄');
 		}
 	});
 }
@@ -1021,12 +1021,12 @@ playPauseBtn.addEventListener('click', () => {
 
 	if (isPaused) {
 		playPauseBtn.innerHTML = '<span class="icon">▶</span>';
-		liveBadge.textContent = "DURAKLATILDI";
+		liveBadge.textContent = "PAUSED";
 		liveBadge.style.backgroundColor = "#555";
 	} else {
 		jumpToLive();
 		playPauseBtn.innerHTML = '<span class="icon">⏸</span>';
-		liveBadge.textContent = "CANLI";
+		liveBadge.textContent = "LIVE";
 		liveBadge.style.backgroundColor = "#ef4444";
 	}
 });
@@ -1052,14 +1052,14 @@ if (talkBtn) {
 	talkBtn.addEventListener('click', () => {
 		isTalking = !isTalking;
 		if (isTalking) {
-			if (talkBtnText) talkBtnText.textContent = 'Konuşmayı Kapat';
+			if (talkBtnText) talkBtnText.textContent = 'Stop Talking';
 			talkBtn.classList.add('btn-secondary');
 			if (talkWave) {
 				talkWave.classList.remove('hidden');
 				talkWave.style.display = 'flex';
 			}
 		} else {
-			if (talkBtnText) talkBtnText.textContent = 'Konuş';
+			if (talkBtnText) talkBtnText.textContent = 'Talk';
 			talkBtn.classList.remove('btn-secondary');
 			if (talkWave) {
 				talkWave.classList.add('hidden');
@@ -1149,13 +1149,13 @@ function playAudioChime() {
 
 // --- IPC Notification Hooks ---
 ipcRenderer.on('doorbell-ring', () => {
-	connectionStatus.textContent = `Zil Çaldı!`;
-	showToastNotification('Zil Çalıyor!', 'Kapı zili tetiklendi. Canlı yayını görmek için tıklayın.', '🔔');
+	connectionStatus.textContent = `Doorbell Rang!`;
+	showToastNotification('Doorbell Ringing!', 'The doorbell was triggered. Click to view the live feed.', '🔔');
 	setTimeout(jumpToLive, 500);
 });
 
 ipcRenderer.on('person-detected-event', () => {
-	showToastNotification('Hareket Algılandı!', 'Kapıda birisi tespit edildi!', '🏃');
+	showToastNotification('Motion Detected!', 'Someone was detected at the door!', '🏃');
 	setTimeout(jumpToLive, 500);
 });
 
@@ -1376,7 +1376,7 @@ if (wizardFinishBtn) {
 		}
 		
 		// Recalculate HA and camera connections
-		connectionStatus.textContent = "Bağlantı Güncelleniyor...";
+		connectionStatus.textContent = "Updating Connection...";
 		await checkHAConnection();
 		await fetchHAEntities();
 		connectHAWebSocket();
@@ -1434,7 +1434,7 @@ if (saveSettingsBtn) {
 		settingsModal.classList.add('hidden');
 		
 		if (haUrl !== oldHaUrl || haToken !== oldHaToken || doorbellEntityInput !== oldDoorbellEntity) {
-			connectionStatus.textContent = "Bağlantı Güncelleniyor...";
+			connectionStatus.textContent = "Updating Connection...";
 			await checkHAConnection();
 			await fetchHAEntities();
 			connectHAWebSocket();
@@ -1473,7 +1473,7 @@ function customDecrypt(base64Text, key) {
 		}
 		return result;
 	} catch (e) {
-		throw new Error("Geçersiz şifreli veri yapısı.");
+		throw new Error("Invalid encrypted data structure.");
 	}
 }
 
@@ -1530,14 +1530,14 @@ if (exportSettingsBtn) {
 			const encrypted = customEncrypt(jsonStr, CIPHER_KEY);
 			
 			navigator.clipboard.writeText(encrypted).then(() => {
-				showToastNotification('Ayarlar Kopyalandı', 'Şifreli ayarlarınız panoya başarıyla kopyalandı.', '📤');
+				showToastNotification('Settings Copied', 'Your encrypted settings have been successfully copied to the clipboard.', '📤');
 			}).catch(err => {
-				console.error("Panoya kopyalama hatası:", err);
-				alert("Ayarlar kopyalanamadı: " + err.message);
+				console.error("Clipboard copy error:", err);
+				alert("Failed to copy settings: " + err.message);
 			});
 		} catch (e) {
-			console.error("Dışa aktarma hatası:", e);
-			showToastNotification('Dışa Aktarma Hatası', e.message, '⚠️');
+			console.error("Export error:", e);
+			showToastNotification('Export Error', e.message, '⚠️');
 		}
 	});
 }
@@ -1549,7 +1549,7 @@ if (importSettingsBtn) {
 		try {
 			const clipboardText = await navigator.clipboard.readText();
 			if (!clipboardText) {
-				showToastNotification('Pano Boş', 'Panoda yapıştırılacak veri bulunamadı.', '⚠️');
+				showToastNotification('Clipboard Empty', 'No clipboard data found to paste.', '⚠️');
 				return;
 			}
 			
@@ -1557,7 +1557,7 @@ if (importSettingsBtn) {
 			const data = JSON.parse(decrypted);
 			
 			if (!data || !data.config || !data.localStorage) {
-				throw new Error("Geçersiz veri yapısı veya hatalı anahtar.");
+				throw new Error("Invalid data structure or incorrect key.");
 			}
 			
 			// Update config via IPC
@@ -1606,7 +1606,7 @@ if (importSettingsBtn) {
 				const displaySelect = document.getElementById('display-select');
 				if (displaySelect) {
 					displaySelect.innerHTML = displays.map(d => 
-						`<option value="${d.id}" ${d.id === config.DISPLAY_ID ? 'selected' : ''}>${d.label} ${d.isPrimary ? '(Birincil)' : ''}</option>`
+						`<option value="${d.id}" ${d.id === config.DISPLAY_ID ? 'selected' : ''}>${d.label} ${d.isPrimary ? '(Primary)' : ''}</option>`
 					).join('');
 				}
 			} catch (e) {
@@ -1627,16 +1627,16 @@ if (importSettingsBtn) {
 			
 			// Trigger UI/Connection layout and refresh streams
 			updateLayout();
-			connectionStatus.textContent = "Bağlantı Güncelleniyor...";
+			connectionStatus.textContent = "Updating Connection...";
 			await checkHAConnection();
 			await fetchHAEntities();
 			connectHAWebSocket();
 			refreshStreams();
 			
-			showToastNotification('Ayarlar Yüklendi', 'Tüm ayarlar ve kanal eşleşmeleri başarıyla panodan yüklendi!', '📥');
+			showToastNotification('Settings Imported', 'All settings and channel matches have been successfully imported from the clipboard!', '📥');
 		} catch (e) {
-			console.error("İçe aktarma hatası:", e);
-			showToastNotification('İçe Aktarma Hatası', 'Veri çözülemedi. Lütfen geçerli bir şifreli veri kopyaladığınızdan emin olun.', '⚠️');
+			console.error("Import error:", e);
+			showToastNotification('Import Error', 'Failed to decrypt data. Please make sure you have copied valid encrypted settings.', '⚠️');
 		}
 	});
 }
@@ -1644,13 +1644,13 @@ if (importSettingsBtn) {
 // --- Home Assistant websocket status ---
 async function checkHAConnection() {
 	if (!config.HA_URL || !config.HA_TOKEN) {
-		connectionStatus.textContent = "HA Bağlantısı Yok (Token Eksik)";
+		connectionStatus.textContent = "No HA Connection (Token Missing)";
 		return;
 	}
 	try {
 		const res = await axios.get(`${config.HA_URL}/api/`, { headers: { 'Authorization': `Bearer ${config.HA_TOKEN}` }, timeout: 2000 });
-		if (res.status === 200) connectionStatus.textContent = "HA Bağlantısı Başarılı";
-	} catch (e) { connectionStatus.textContent = "HA Bağlantı Hatası"; }
+		if (res.status === 200) connectionStatus.textContent = "HA Connection Successful";
+	} catch (e) { connectionStatus.textContent = "HA Connection Error"; }
 }
 
 function connectHAWebSocket() {
@@ -1702,7 +1702,7 @@ function connectHAWebSocket() {
 			console.log(`Subscribed state_changed events. Watching entity: ${config.DOORBELL_ENTITY}`);
 		} else if (msg.type === 'auth_invalid') {
 			console.error("WebSocket auth token rejected.");
-			connectionStatus.textContent = "HA Yetkilendirme Hatası!";
+			connectionStatus.textContent = "HA Authorization Error!";
 		} else if (msg.type === 'event') {
 			const eventData = msg.event;
 			if (eventData && eventData.event_type === 'state_changed') {
@@ -1769,7 +1769,7 @@ function updateCameraDropdownLabels() {
 		let html = '';
 		
 		if (haCameras && haCameras.length > 0) {
-			html += '<optgroup label="Home Assistant Kameraları">';
+			html += '<optgroup label="Home Assistant Cameras">';
 			haCameras.forEach(cam => {
 				const friendlyName = cam.attributes.friendly_name || cam.entity_id;
 				html += `<option value="${cam.entity_id}">${friendlyName}</option>`;
@@ -1777,9 +1777,9 @@ function updateCameraDropdownLabels() {
 			html += '</optgroup>';
 		}
 		
-		html += '<optgroup label="Yerel RTSP Kanalları">';
+		html += '<optgroup label="Local RTSP Channels">';
 		for (let i = 1; i <= 5; i++) {
-			html += `<option value="rtsp_${i}">Kanal ${i}</option>`;
+			html += `<option value="rtsp_${i}">Channel ${i}</option>`;
 		}
 		html += '</optgroup>';
 		
@@ -1833,7 +1833,7 @@ async function loadAIModel() {
 		console.log("AI Analyzer loading...");
 		const badge = document.getElementById('ai-status-badge');
 		if (badge) {
-			badge.innerHTML = '<span class="spinner-mini"></span> AI Analizör Yükleniyor...';
+			badge.innerHTML = '<span class="spinner-mini"></span> Loading AI Analyzer...';
 			badge.className = 'ai-hud-badge detecting';
 		}
 		
@@ -1854,7 +1854,7 @@ async function loadAIModel() {
 		
 		console.log("cocoSsd object classification loaded successfully.");
 		if (badge) {
-			badge.innerHTML = '● AI Gözcü Aktif';
+			badge.innerHTML = '● AI Watcher Active';
 			badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 			badge.style.background = 'rgba(52, 199, 89, 0.15)';
 			badge.style.color = '#a3ffb8';
@@ -1863,7 +1863,7 @@ async function loadAIModel() {
 		console.error("cocoSsd model loading failed:", e);
 		const badge = document.getElementById('ai-status-badge');
 		if (badge) {
-			badge.innerHTML = '● Hareket Gözcüsü Aktif'; // Fallback mode active
+			badge.innerHTML = '● Motion Watcher Active'; // Fallback mode active
 			badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 			badge.style.background = 'rgba(52, 199, 89, 0.15)';
 			badge.style.color = '#a3ffb8';
@@ -1971,14 +1971,14 @@ function triggerMotionDetection(sourceRole = "", activeElement = null, canvas = 
 	
 	const badge = document.getElementById('ai-status-badge');
 	if (badge) {
-		badge.innerHTML = '● HAREKET ALGILANDI!';
+		badge.innerHTML = '● MOTION DETECTED!';
 		badge.style.background = 'rgba(255, 149, 0, 0.35)'; // Orange for pure motion
 		badge.style.borderColor = 'rgba(255, 149, 0, 0.8)';
 		badge.style.color = '#ffffff';
 		
 		setTimeout(() => {
 			if (!cocoModel || !aiActive) {
-				badge.innerHTML = '● Hareket Gözcüsü Aktif';
+				badge.innerHTML = '● Motion Watcher Active';
 				badge.style.background = 'rgba(52, 199, 89, 0.15)';
 				badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 				badge.style.color = '#a3ffb8';
@@ -1989,7 +1989,7 @@ function triggerMotionDetection(sourceRole = "", activeElement = null, canvas = 
 
 // Unified helper function to apply smart focused view mode or swap Slot X to Slot 1 in grid views
 function applySmartFocusOrSwap(sourceRole, isPerson, score = null) {
-	const typeText = isPerson ? 'İnsan Tespiti' : 'Hareket Algılandı';
+	const typeText = isPerson ? 'Person Detected' : 'Motion Detected';
 	const typeIcon = isPerson ? '🏃' : '🔔';
 	
 	// 1. If currently in single view mode, we don't swap grids.
@@ -2061,7 +2061,7 @@ function applySmartFocusOrSwap(sourceRole, isPerson, score = null) {
 			slots[sourceRole].select.value = temp;
 			
 			refreshStreams();
-			showToastNotification(typeText, `Kamera odak ekranına taşındı.`, typeIcon);
+			showToastNotification(typeText, `Camera moved to the focus screen.`, typeIcon);
 		}
 		
 		// Highlight Slot 1 border to show active focused stream alert
@@ -2089,7 +2089,7 @@ function applySmartFocusOrSwap(sourceRole, isPerson, score = null) {
 				
 				updateLayout();
 				refreshStreams();
-				showToastNotification(typeText, `Kamera tam ekrana alındı.`, typeIcon);
+				showToastNotification(typeText, `Camera maximized to full screen.`, typeIcon);
 			}
 		}
 	}
@@ -2267,14 +2267,14 @@ function triggerPersonDetection(score, sourceRole = "", activeElement = null, ai
 	// Heartbeat color animation on HUD Status Badge
 	const badge = document.getElementById('ai-status-badge');
 	if (badge) {
-		badge.innerHTML = '● İNSAN ALGILANDI!';
+		badge.innerHTML = '● PERSON DETECTED!';
 		badge.style.background = 'rgba(255, 59, 48, 0.35)';
 		badge.style.borderColor = 'rgba(255, 59, 48, 0.8)';
 		badge.style.color = '#ffffff';
 		
 		setTimeout(() => {
 			if (cocoModel && aiActive) {
-				badge.innerHTML = '● AI Gözcü Aktif';
+				badge.innerHTML = '● AI Watcher Active';
 				badge.style.background = 'rgba(52, 199, 89, 0.15)';
 				badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 				badge.style.color = '#a3ffb8';
@@ -2323,7 +2323,7 @@ function restorePreviousLayout() {
 	videoContainerSingle.classList.remove('motion-detected-slot');
 	Object.values(slots).forEach(s => s.el.classList.remove('motion-detected-slot'));
 	
-	showToastNotification('Normal Görünüm', 'Kamera düzeni geri yüklendi.', '📺');
+	showToastNotification('Normal View', 'Camera layout has been restored.', '📺');
 }
 
 // --- Decoupled 60fps Bounding Box Interpolation Engine ---
@@ -2532,7 +2532,7 @@ function renderPredictionsForRole(role, canvas) {
 		ctx.fillStyle = 'rgba(255, 59, 48, 0.85)';
 		ctx.font = 'bold 11px "Inter", -apple-system, sans-serif';
 		
-		const labelText = `[AI] İNSAN %${Math.round(s.score * 100)}`;
+		const labelText = `[AI] PERSON ${Math.round(s.score * 100)}%`;
 		const textWidth = ctx.measureText(labelText).width;
 		
 		// Label border

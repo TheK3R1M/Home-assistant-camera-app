@@ -92,13 +92,13 @@ if (process.platform === 'win32') {
 	app.setAppUserModelId('com.homeassistant.camera');
 	
 	try {
-		const shortcutPath = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Kamera Gözcüsü.lnk');
+		const shortcutPath = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Camera Monitor.lnk');
 		if (!fs.existsSync(shortcutPath)) {
 			shell.writeShortcutLink(shortcutPath, 'create', {
 				target: process.execPath,
 				args: `"${__dirname}"`,
 				appUserModelId: 'com.homeassistant.camera',
-				description: 'Kamera Gözcüsü Akıllı Kamera Takip Uygulaması',
+				description: 'Camera Monitor Intelligent Camera Tracking Application',
 				icon: path.join(__dirname, 'icon.png'),
 				iconIndex: 0
 			});
@@ -408,18 +408,18 @@ function createWindow() {
 function createTray() {
 	tray = new Tray(path.join(__dirname, 'icon.png')); // Placeholder icon path
 	const contextMenu = Menu.buildFromTemplate([
-		{ label: 'Şimdi Göster', click: () => showWindow() },
-		{ label: 'Başlangıçta Çalıştır', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: toggleAutoLaunch },
+		{ label: 'Show Window', click: () => showWindow() },
+		{ label: 'Run at Startup', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: toggleAutoLaunch },
 		{ type: 'separator' },
 		{
-			label: 'Çıkış', click: () => {
+			label: 'Exit', click: () => {
 				app.isQuitting = true;
 				if (mainWindow) mainWindow.close(); // Close event will now pass
 				app.quit();
 			}
 		}
 	]);
-	tray.setToolTip('Kamera Gözcüsü');
+	tray.setToolTip('Camera Monitor');
 	tray.setContextMenu(contextMenu);
 
 	tray.on('click', () => showWindow());
@@ -492,7 +492,7 @@ ipcMain.handle('save-config', (event, newConfig) => {
 ipcMain.handle('get-displays', () => {
 	return screen.getAllDisplays().map(d => ({
 		id: d.id,
-		label: `${d.label || 'Ekran'} (${d.bounds.width}x${d.bounds.height})`,
+		label: `${d.label || 'Display'} (${d.bounds.width}x${d.bounds.height})`,
 		isPrimary: d.id === screen.getPrimaryDisplay().id
 	}));
 });
@@ -515,7 +515,7 @@ ipcMain.on('save-video-recording', (event, data) => {
     try {
         const fs = require('fs');
         const path = require('path');
-        const recordDir = path.join(app.getPath('videos'), 'KameraGozcusuKayitlar');
+        const recordDir = path.join(app.getPath('videos'), 'CameraMonitorRecordings');
         
         if (!fs.existsSync(recordDir)) {
             fs.mkdirSync(recordDir, { recursive: true });
@@ -530,7 +530,7 @@ ipcMain.on('save-video-recording', (event, data) => {
             String(now.getMinutes()).padStart(2, '0') + '-' + 
             String(now.getSeconds()).padStart(2, '0');
             
-        const fileName = `Kamera_${data.role}_${timestamp}.webm`;
+        const fileName = `Camera_${data.role}_${timestamp}.webm`;
         const filePath = path.join(recordDir, fileName);
         
         fs.writeFileSync(filePath, Buffer.from(data.buffer));
@@ -557,8 +557,8 @@ function handleDoorbellTrigger() {
 
 	try {
 		const notification = new Notification({
-			title: 'Kapı Çalıyor!',
-			body: 'Kapı zili tetiklendi. Canlı yayını görmek için tıklayın.',
+			title: 'Doorbell Ringing!',
+			body: 'Doorbell was triggered. Click to view live feed.',
 			icon: path.join(__dirname, 'icon.png')
 		});
 		notification.on('click', () => showWindow());
@@ -583,8 +583,8 @@ function handlePersonDetectedTrigger() {
 
 	try {
 		const notification = new Notification({
-			title: 'Hareket Algılandı!',
-			body: 'Kapıda birisi tespit edildi! Canlı yayını görmek için tıklayın.',
+			title: 'Motion Detected!',
+			body: 'A person was detected at the door! Click to view live feed.',
 			icon: path.join(__dirname, 'icon.png')
 		});
 		notification.on('click', () => showWindow());

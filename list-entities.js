@@ -5,14 +5,14 @@ const HA_URL = process.env.HA_URL;
 const HA_TOKEN = process.env.HA_TOKEN;
 
 if (!HA_TOKEN || HA_TOKEN === 'token_buraya_yapistirilacak') {
-	console.error('HATA: .env dosyasında geçerli bir HA_TOKEN bulunamadı.');
-	console.error('Lütfen .env dosyasını açıp tokenınızı yapıştırın.');
+	console.error('ERROR: No valid HA_TOKEN found in your environment configuration.');
+	console.error('Please open your config and paste your token.');
 	process.exit(1);
 }
 
 async function listEntities() {
 	try {
-		console.log(`Bağlanılıyor: ${HA_URL}...`);
+		console.log(`Connecting to: ${HA_URL}...`);
 		const response = await axios.get(`${HA_URL}/api/states`, {
 			headers: {
 				'Authorization': `Bearer ${HA_TOKEN}`,
@@ -25,29 +25,29 @@ async function listEntities() {
 		const locks = entities.filter(e => e.entity_id.startsWith('lock.') || e.entity_id.startsWith('switch.'));
 
 		console.log('\n----------------------------------------');
-		console.log(`KAMERALAR (${cameras.length} adet bulundu):`);
-		cameras.forEach(c => console.log(` - ${c.entity_id} (${c.attributes.friendly_name || 'İsimsiz'})`));
+		console.log(`CAMERAS (${cameras.length} found):`);
+		cameras.forEach(c => console.log(` - ${c.entity_id} (${c.attributes.friendly_name || 'Unnamed'})`));
 
 		console.log('\n----------------------------------------');
-		console.log(`KİLİTLER / ANAHTARLAR (${locks.length} adet bulundu):`);
+		console.log(`LOCKS / SWITCHES (${locks.length} found):`);
 		// Filter out some common clutter if needed, but showing all is safer
-		locks.slice(0, 20).forEach(l => console.log(` - ${l.entity_id} (${l.attributes.friendly_name || 'İsimsiz'})`));
-		if (locks.length > 20) console.log(`... ve ${locks.length - 20} tane daha.`);
+		locks.slice(0, 20).forEach(l => console.log(` - ${l.entity_id} (${l.attributes.friendly_name || 'Unnamed'})`));
+		if (locks.length > 20) console.log(`... and ${locks.length - 20} more.`);
 
 		console.log('----------------------------------------\n');
 
 	} catch (error) {
-		console.error('HATA OLUŞTU:');
+		console.error('ERROR OCCURRED:');
 		if (error.response) {
-			console.error(`Durum Kodu: ${error.response.status}`);
-			console.error('Mesaj:', error.response.statusText);
+			console.error(`Status Code: ${error.response.status}`);
+			console.error('Message:', error.response.statusText);
 		} else {
 			console.error(error.message);
 		}
-		console.log('\nOlası Çözümler:');
-		console.log('1. HA_URL doğru mu? (http://ev.local:8123)');
-		console.log('2. Token doğru kopyalandı mı?');
-		console.log('3. Home Assistant çalışıyor mu?');
+		console.log('\nPossible Solutions:');
+		console.log('1. Is HA_URL correct? (e.g. http://ev.local:8123)');
+		console.log('2. Was the token copied correctly?');
+		console.log('3. Is Home Assistant running?');
 	}
 }
 

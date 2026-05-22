@@ -26,10 +26,10 @@ if not exist ".git" (
     git init
 )
 
-:: Configure remote origin
+:: Configure remote origin with the correct repo name
 git remote remove origin >nul 2>&1
-git remote add origin https://github.com/TheK3R1M/HA-PC-Cam-Monitor.git
-echo Remote GitHub adresi baglandi: https://github.com/TheK3R1M/HA-PC-Cam-Monitor.git
+git remote add origin https://github.com/TheK3R1M/Home-assistant-camera-app.git
+echo Remote GitHub adresi baglandi: https://github.com/TheK3R1M/Home-assistant-camera-app.git
 
 :: Add and commit
 echo.
@@ -48,7 +48,7 @@ git push -u origin main
 echo.
 echo ==========================================
 echo Kodlar basariyla GitHub'a pushlandi!
-echo Artik GitHub Releases sayfasina gidip .exe dosyasini yukleyebilirsiniz.
+echo Artik GitHub sayfanizi yenileyip, Releases kismindan .exe dosyasini yukleyebilirsiniz.
 echo.
 echo Kapatmak icin bir tusa basin...
 pause > nul

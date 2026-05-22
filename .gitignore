@@ -2,6 +2,7 @@
 node_modules/
 
 # Build outputs
+memory-bank/
 dist/
 dist-build/
 build/

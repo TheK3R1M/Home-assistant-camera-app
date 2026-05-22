@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Kamera Gözcüsü - Web Modu</title>
+	<title>Camera Monitor - Web Mode</title>
 	<!-- Google Fonts -->
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -488,15 +488,15 @@
 	<div class="app-container">
 		<header>
 			<div class="title-area">
-				<h1>Kamera Gözcüsü</h1>
-				<p>Kurulumsuz Web İzleme Dashboard'u</p>
+				<h1>Camera Monitor</h1>
+				<p>Zero-Install Web Monitoring Dashboard</p>
 			</div>
 			<div class="controls-top">
 				<!-- Camera Select Selector -->
 				<select id="camera-select">
-					<option value="" disabled selected>Kamera Yükleniyor...</option>
+					<option value="" disabled selected>Loading Cameras...</option>
 				</select>
-				<button id="settings-btn" class="icon-btn" title="Ayarlar">⚙️</button>
+				<button id="settings-btn" class="icon-btn" title="Settings">⚙️</button>
 			</div>
 		</header>
 
@@ -505,30 +505,30 @@
 			<div class="video-card">
 				<div id="video-loader" class="loader-overlay">
 					<div class="spinner"></div>
-					<div class="loader-text">Home Assistant Akışı Başlatılıyor...</div>
+					<div class="loader-text">Initializing Home Assistant Stream...</div>
 				</div>
 				<div class="video-overlay">
-					<span class="badge badge-live">Canlı</span>
-					<span id="cam-name-badge" class="badge badge-status">Kapı Kamerası</span>
+					<span class="badge badge-live">Live</span>
+					<span id="cam-name-badge" class="badge badge-status">Door Camera</span>
 				</div>
 				<!-- Canvas or image for periodic refresh stream -->
-				<img id="video-stream" class="video-stream" src="" alt="Kamera Akışı Bekleniyor...">
+				<img id="video-stream" class="video-stream" src="" alt="Waiting for Camera Stream...">
 			</div>
 
 			<!-- Sidebar Actions -->
 			<div class="sidebar-card">
 				<div class="controls-group">
 					<button id="unlock-outer-btn" class="btn btn-success">
-						<span>🔓</span> Dış Kapıyı Aç
+						<span>🔓</span> Unlock Outer Door
 					</button>
 					<button id="unlock-inner-btn" class="btn btn-success">
-						<span>🚪</span> İç Kapıyı Aç
+						<span>🚪</span> Unlock Inner Door
 					</button>
 				</div>
 				
 				<div class="controls-group">
 					<button id="talk-btn" class="btn btn-secondary">
-						<span>🎤</span> Konuşmayı Başlat
+						<span>🎤</span> Start Intercom
 					</button>
 					<div id="talk-wave" class="voice-wave">
 						<div class="bar"></div>
@@ -545,7 +545,7 @@
 		<footer class="status-footer">
 			<div class="status-indicator">
 				<div id="status-dot" class="status-dot"></div>
-				<span id="status-text">Bağlantı kesildi</span>
+				<span id="status-text">Disconnected</span>
 			</div>
 			<div>HA Link: <span id="ha-link-text">ev.local</span></div>
 		</footer>
@@ -555,22 +555,22 @@
 	<div id="setup-modal" class="modal">
 		<div class="modal-content">
 			<div class="modal-header">
-				<h2>Home Assistant Bağlantısı</h2>
-				<p>Canlı akış ve kilitler için bilgilerinizi girin.</p>
+				<h2>Home Assistant Connection</h2>
+				<p>Enter credentials for live streaming and locks.</p>
 			</div>
 			
 			<div class="input-group">
-				<label for="ha-url-input">Home Assistant URL Adresi</label>
+				<label for="ha-url-input">Home Assistant URL Address</label>
 				<input type="text" id="ha-url-input" placeholder="http://ev.local:8123" value="http://ev.local:8123">
 			</div>
 
 			<div class="input-group">
-				<label for="ha-token-input">Uzun Ömürlü Erişim Tokenı (Long-Lived Access Token)</label>
-				<input type="password" id="ha-token-input" placeholder="Tokenınızı buraya yapıştırın">
+				<label for="ha-token-input">Long-Lived Access Token</label>
+				<input type="password" id="ha-token-input" placeholder="Paste your token here">
 			</div>
 
 			<div class="modal-actions">
-				<button id="save-credentials-btn" class="btn">Bilgileri Kaydet</button>
+				<button id="save-credentials-btn" class="btn">Save Credentials</button>
 			</div>
 		</div>
 	</div>
@@ -626,7 +626,7 @@
 
 		// --- Home Assistant Connection & API Actions ---
 		async function connectToHA() {
-			updateConnectionStatus('connecting', 'Bağlantı kuruluyor...');
+			updateConnectionStatus('connecting', 'Connecting...');
 			
 			try {
 				// Test connection & Fetch active entities
@@ -637,10 +637,10 @@
 					}
 				});
 
-				if (!response.ok) throw new Error('Token geçersiz veya sunucu yanıt vermiyor.');
+				if (!response.ok) throw new Error('Token invalid or server is not responding.');
 
 				const entities = await response.json();
-				updateConnectionStatus('online', 'Home Assistant Bağlantısı Aktif');
+				updateConnectionStatus('online', 'Home Assistant Connection Active');
 				
 				// Extract cameras
 				camerasList = entities.filter(e => e.entity_id.startsWith('camera.'));
@@ -654,17 +654,18 @@
 					cameraSelect.value = selectedCam;
 					startCameraStream(selectedCam);
 				} else {
-					videoLoader.querySelector('.loader-text').textContent = 'Kamera varlığı bulunamadı!';
+					videoLoader.querySelector('.loader-text').textContent = 'No camera entity found!';
 					videoLoader.querySelector('.spinner').classList.add('hidden');
 				}
 
 			} catch (error) {
 				console.error(error);
-				updateConnectionStatus('offline', 'Bağlantı Hatası! Bilgileri kontrol edin.');
+				updateConnectionStatus('offline', 'Connection Error! Check your credentials.');
 				setupModal.classList.add('open');
 			}
 		}
 
+		// --- Connection HUD state manager ---
 		function updateConnectionStatus(state, message) {
 			statusText.textContent = message;
 			statusDot.className = 'status-dot';
@@ -677,7 +678,7 @@
 
 		function populateCameraDropdown() {
 			if (camerasList.length === 0) {
-				cameraSelect.innerHTML = '<option value="" disabled>Kamera bulunamadı</option>';
+				cameraSelect.innerHTML = '<option value="" disabled>No cameras found</option>';
 				return;
 			}
 			
@@ -697,7 +698,7 @@
 			camNameBadge.textContent = selectedCamObj ? (selectedCamObj.attributes.friendly_name || entityId) : entityId;
 
 			videoLoader.classList.remove('hidden');
-			videoLoader.querySelector('.loader-text').textContent = 'Görüntü aktarılıyor...';
+			videoLoader.querySelector('.loader-text').textContent = 'Transferring stream...';
 			videoLoader.querySelector('.spinner').classList.remove('hidden');
 
 			// Fetch one frame immediately to hide loader faster
@@ -740,7 +741,7 @@
 			const originalHtml = btn.innerHTML;
 			
 			btn.disabled = true;
-			btn.innerHTML = '<span>⏳</span> İstek yollanıyor...';
+			btn.innerHTML = '<span>⏳</span> Sending request...';
 
 			try {
 				const response = await fetch(`${haUrl}/api/services/switch/turn_on`, {
@@ -754,12 +755,12 @@
 
 				if (!response.ok) throw new Error('API request failed');
 
-				btn.innerHTML = `<span>✅</span> ${displayName} Açıldı`;
+				btn.innerHTML = `<span>✅</span> ${displayName} Opened`;
 				btn.style.background = '#059669'; // Success green splash
 
 			} catch (error) {
 				console.error('Unlock error:', error);
-				btn.innerHTML = '<span>⚠️</span> Başarısız!';
+				btn.innerHTML = '<span>⚠️</span> Failed!';
 				btn.style.background = '#dc2626'; // Red splash
 			}
 
@@ -781,7 +782,7 @@
 			const enteredToken = haTokenInput.value.trim();
 
 			if (!enteredUrl || !enteredToken) {
-				alert('Lütfen tüm alanları doldurun!');
+				alert('Please fill in all fields!');
 				return;
 			}
 
@@ -800,11 +801,11 @@
 		});
 
 		unlockOuterBtn.addEventListener('click', (e) => {
-			triggerDoor(DOOR_OUTER_ENTITY, e.currentTarget, 'Dış Kapı');
+			triggerDoor(DOOR_OUTER_ENTITY, e.currentTarget, 'Outer Door');
 		});
 
 		unlockInnerBtn.addEventListener('click', (e) => {
-			triggerDoor(DOOR_INNER_ENTITY, e.currentTarget, 'İç Kapı');
+			triggerDoor(DOOR_INNER_ENTITY, e.currentTarget, 'Inner Door');
 		});
 
 		// Dynamic mic intercom animation trigger (Fidelity details)
@@ -812,11 +813,11 @@
 		talkBtn.addEventListener('click', () => {
 			isTalking = !isTalking;
 			if (isTalking) {
-				talkBtn.innerHTML = '<span>🛑</span> Konuşmayı Kapat';
+				talkBtn.innerHTML = '<span>🛑</span> Stop Intercom';
 				talkBtn.classList.add('btn-secondary');
 				talkWave.classList.add('active');
 			} else {
-				talkBtn.innerHTML = '<span>🎤</span> Konuşmayı Başlat';
+				talkBtn.innerHTML = '<span>🎤</span> Start Intercom';
 				talkBtn.classList.remove('btn-secondary');
 				talkWave.classList.remove('active');
 			}
