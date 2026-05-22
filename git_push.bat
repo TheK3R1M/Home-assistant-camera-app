@@ -28,8 +28,8 @@ if not exist ".git" (
 
 :: Configure remote origin with the correct repo name
 git remote remove origin >nul 2>&1
-git remote add origin https://github.com/TheK3R1M/Home-assistant-camera-app.git
-echo Remote GitHub adresi baglandi: https://github.com/TheK3R1M/Home-assistant-camera-app.git
+git remote add origin https://github.com/TheK3R1M/Home-assistant-camera-app
+echo Remote GitHub adresi baglandi: https://github.com/TheK3R1M/Home-assistant-camera-app
 
 :: Add and commit
 echo.
