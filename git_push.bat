@@ -14,7 +14,7 @@ cd /d "%~dp0"
 where git >nul 2>&1
 if %errorlevel% neq 0 (
     echo [HATA] Bilgisayarinizda Git yuklu bulunamadi!
-    echo Lutfen Git'i yukleyin (https://git-scm.com/) ve tekrar deneyin.
+    echo Lutfen Git'i https://git-scm.com/ adresinden yukleyin ve tekrar deneyin.
     echo.
     pause
     exit /b
