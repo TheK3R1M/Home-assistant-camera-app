@@ -21,6 +21,10 @@
 	padding: 0;
 }
 
+input, select, textarea, button {
+	font-family: inherit;
+}
+
 body {
 	margin: 0;
 	padding: 0;
@@ -424,6 +428,8 @@ main {
 
 /* Footer Control Deck (Glassmorphism layout) */
 .controls-container {
+	position: relative;
+	z-index: 150;
 	padding: 12px 24px;
 	background: rgba(255, 255, 255, 0.02);
 	backdrop-filter: blur(28px) saturate(180%);

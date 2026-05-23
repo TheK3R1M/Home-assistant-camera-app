@@ -207,6 +207,50 @@ graph LR
 
 ---
 
+## 🔔 Doorbell Automation Guide (Home Assistant)
+
+To trigger the chime sound and automatic camera feed popup inside the Desktop App, you can configure your Home Assistant in two different ways. The **Event Trigger (Method B)** is highly recommended as it is completely generalized and does not require hardcoding any specific local PC IP addresses!
+
+### Method A: Entity State Trigger (Default)
+If you already have a physical doorbell sensor or smart button integrated in Home Assistant, you can configure the app to watch its state directly.
+1. Locate your doorbell entity ID in Home Assistant (e.g., `binary_sensor.doorbell`).
+2. Enter this ID in the app's **Doorbell Entity ID** setting.
+3. The app will automatically watch this entity via WebSocket. When the state changes from `off` to `on`, the app will instantly ring and pop up.
+
+### Method B: Custom Event Trigger (Highly Recommended & Generalized)
+If you want to trigger the app from *any* Home Assistant automation, script, or physical button without hardcoding your local computer's IP address (making it robust across multiple clients), you can fire a custom WebSocket event.
+
+The Desktop App automatically subscribes to the custom event `cam_monitor_event`. 
+
+#### 1. Home Assistant Automation Example
+Add this automation to your `automations.yaml` to trigger the app whenever your doorbell button is pressed:
+
+```yaml
+- id: trigger_camera_monitor_on_doorbell
+  alias: "Trigger Camera Monitor on Doorbell Press"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.doorbell_button
+      to: "on"
+  action:
+    - event: cam_monitor_event
+      event_data:
+        type: doorbell
+```
+
+#### 2. Manual Action Trigger in Automations UI
+If you prefer configuring via the Home Assistant Visual Editor:
+* Add a new action: **Manual Action / Fire Event**.
+* **Event Type**: `cam_monitor_event`
+* **Event Data**:
+  ```yaml
+  type: doorbell
+  ```
+
+This triggers all instances of the **Camera Monitor** desktop application running on your local network simultaneously, fully bypassing the need for static IP targeting or complex `rest_command` webhooks!
+
+---
+
 ## 📦 Building & Distribution
 
 We have provided ready-to-run automation scripts for convenience:

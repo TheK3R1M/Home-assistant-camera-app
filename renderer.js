@@ -1814,21 +1814,37 @@ function connectHAWebSocket() {
 				event_type: 'state_changed'
 			};
 			haSocket.send(JSON.stringify(subMsg));
-			console.log(`Subscribed state_changed events. Watching entity: ${config.DOORBELL_ENTITY}`);
+			
+			// Also subscribe to custom cam_monitor_event triggers (generalized triggers independent of local PC IPs)
+			const customSubMsg = {
+				id: haMessageId++,
+				type: 'subscribe_events',
+				event_type: 'cam_monitor_event'
+			};
+			haSocket.send(JSON.stringify(customSubMsg));
+			console.log(`Subscribed state_changed events and custom cam_monitor_event triggers.`);
 		} else if (msg.type === 'auth_invalid') {
 			console.error("WebSocket auth token rejected.");
 			connectionStatus.textContent = "HA Authorization Error!";
 		} else if (msg.type === 'event') {
 			const eventData = msg.event;
-			if (eventData && eventData.event_type === 'state_changed') {
-				const data = eventData.data;
-				if (data && data.entity_id === config.DOORBELL_ENTITY) {
-					const oldState = data.old_state ? data.old_state.state : null;
-					const newState = data.new_state ? data.new_state.state : null;
-					console.log(`[WebSocket HA Event] ${config.DOORBELL_ENTITY} state: ${oldState} -> ${newState}`);
-					
-					if (newState === 'on' && oldState !== 'on') {
-						console.log("Doorbell state is ON. Triggering chime/window popup!");
+			if (eventData) {
+				if (eventData.event_type === 'state_changed') {
+					const data = eventData.data;
+					if (data && data.entity_id === config.DOORBELL_ENTITY) {
+						const oldState = data.old_state ? data.old_state.state : null;
+						const newState = data.new_state ? data.new_state.state : null;
+						console.log(`[WebSocket HA Event] ${config.DOORBELL_ENTITY} state: ${oldState} -> ${newState}`);
+						
+						if (newState === 'on' && oldState !== 'on') {
+							console.log("Doorbell state is ON. Triggering chime/window popup!");
+							ipcRenderer.send('trigger-event', 'doorbell');
+						}
+					}
+				} else if (eventData.event_type === 'cam_monitor_event') {
+					const data = eventData.data;
+					if (data && data.type === 'doorbell') {
+						console.log("[WebSocket Custom Event] cam_monitor_event doorbell triggered!");
 						ipcRenderer.send('trigger-event', 'doorbell');
 					}
 				}
@@ -2051,7 +2067,7 @@ function detectPixelMotion(activeElement, role) {
 	if (!prev) return false;
 	
 	let diffCount = 0;
-	const pixelThreshold = 25; // 25 unit color/brightness delta is considered movement
+	const pixelThreshold = 10; // Lowered to 10 for highly sensitive slow-motion detection in low light
 	
 	for (let i = 0; i < gray.length; i++) {
 		const diff = Math.abs(gray[i] - prev[i]);
@@ -2060,8 +2076,8 @@ function detectPixelMotion(activeElement, role) {
 		}
 	}
 	
-	// Ultra sensitive noise gate for fast movements: 40 pixels out of 4800 pixels (~0.83%)
-	const motionThreshold = 40;
+	// Extremely sensitive noise gate for slow/far movements: 20 pixels out of 4800 pixels (~0.41%)
+	const motionThreshold = 20;
 	return diffCount > motionThreshold;
 }
 
@@ -2243,8 +2259,14 @@ async function scanRole(role, activeElement, canvas) {
 	
 	const isCurrentlyTrackingPerson = activePersonDetections[role] || (personDetectionBuffer[role] > 0);
 	
+	// Increment frame counter for periodic check fallback
+	if (!window.aiFrameCounter) window.aiFrameCounter = {};
+	if (window.aiFrameCounter[role] === undefined) window.aiFrameCounter[role] = 0;
+	window.aiFrameCounter[role]++;
+	const isPeriodicCheck = (window.aiFrameCounter[role] % 15 === 0); // Check periodically once every ~2 seconds even in absolute stillness
+	
 	// 2. Decide if we trigger TensorFlow AI
-	const shouldRunAI = cocoModel && aiActive && (hasMotion || isCurrentlyTrackingPerson);
+	const shouldRunAI = cocoModel && aiActive && (hasMotion || isCurrentlyTrackingPerson || isPeriodicCheck);
 	
 	if (shouldRunAI) {
 		try {
