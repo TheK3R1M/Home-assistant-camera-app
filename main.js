@@ -461,7 +461,8 @@ function createWindow() {
 		webPreferences: {
 			nodeIntegration: true,
 			contextIsolation: false,
-			webSecurity: false // Disable CORS for local HA access
+			webSecurity: false, // Disable CORS for local HA access
+			backgroundThrottling: false
 		},
 		skipTaskbar: false // Show in taskbar
 	});
@@ -531,10 +532,12 @@ function createTray() {
 
 function showWindow() {
 	if (mainWindow) {
-		if (mainWindow.isMinimized()) mainWindow.restore();
-		mainWindow.setAlwaysOnTop(true, 'screen-saver');
 		mainWindow.show();
+		if (mainWindow.isMinimized()) {
+			mainWindow.restore();
+		}
 		mainWindow.focus();
+		mainWindow.setAlwaysOnTop(true, 'screen-saver');
 		mainWindow.setAlwaysOnTop(false);
 		if (process.platform === 'win32') {
 			mainWindow.flashFrame(true);

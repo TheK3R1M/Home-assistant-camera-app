@@ -1883,6 +1883,19 @@ function connectHAWebSocket() {
 			return;
 		}
 
+		// Handle Home Assistant ping/pong to keep WebSocket alive
+		if (msg.type === 'ping') {
+			try {
+				haSocket.send(JSON.stringify({
+					type: 'pong',
+					id: msg.id
+				}));
+			} catch (err) {
+				console.error("Failed to send pong response:", err);
+			}
+			return;
+		}
+
 		if (msg.type === 'auth_required') {
 			haSocket.send(JSON.stringify({
 				type: 'auth',
