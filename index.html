@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Camera Monitor</title>
+	<title>Kamera Gözcüsü</title>
 	<link rel="stylesheet" href="styles.css">
 	<!-- Google Fonts -->
 	<link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,7 +26,7 @@
 		<div id="onboarding-wizard" class="modal hidden">
 			<div class="modal-content" style="min-height: 480px; width: 460px;">
 				<div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-					<h2 style="margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.3px;">Camera Monitor Setup</h2>
+					<h2 style="margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.3px;">Kamera Gözcüsü Kurulumu</h2>
 					<div class="wizard-steps-indicator" style="display: flex; gap: 8px; align-items: center;">
 						<span class="step-dot active" data-step="1" style="width: 8px; height: 8px; border-radius: 50%; background: var(--primary-color); display: inline-block; transition: all 0.3s;"></span>
 						<span class="step-dot" data-step="2" style="width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.2); display: inline-block; transition: all 0.3s;"></span>
@@ -384,7 +384,7 @@
 							<div class="widget-header">
 								<div class="widget-brand">
 									<img src="icon.png" class="widget-logo" alt="logo">
-									<h3>Camera Monitor</h3>
+									<h3>Kamera Gözcüsü</h3>
 								</div>
 								<div class="widget-header-controls">
 									<select class="mode-select" title="View Mode">
@@ -446,7 +446,7 @@
 				<div id="floating-controls-pill" class="floating-controls-pill hidden" style="display: none;">
 					<div class="pill-brand">
 						<img src="icon.png" class="pill-logo" alt="logo">
-						<span>Camera Monitor</span>
+						<span>Kamera Gözcüsü</span>
 					</div>
 					<select class="mode-select" title="View Mode">
 						<option value="single">Single</option>
@@ -459,44 +459,45 @@
 				</div>
 			</div>
 
-			<!-- Footer Kilit & Konuş Kontrolleri -->
-			<div class="controls-container">
-				<div class="controls-left">
-					<div class="footer-brand">
-						<img src="icon.png" class="footer-logo" alt="logo">
-						<h3>Camera Monitor</h3>
-					</div>
-					<select class="mode-select" title="View Mode">
-						<option value="single">Single</option>
-						<option value="dual">Dual</option>
-						<option value="triple">Triple Focus</option>
-						<option value="quad">Quad Grid</option>
-						<option value="five">5-Slot Focus</option>
-					</select>
-					<select class="camera-select" id="footer-camera-select">
-						<option value="" disabled selected>Loading Cameras...</option>
-					</select>
-					<button class="icon-btn settings-btn" title="Settings">⚙️</button>
-				</div>
-				<div class="controls-right">
-					<button id="open-outer-btn" class="action-btn unlock">
-						<span class="icon">🔓</span> Outer Door
-					</button>
-					<button id="open-inner-btn" class="action-btn unlock secondary-unlock">
-						<span class="icon">🚪</span> Inner Door
-					</button>
-					<button id="talk-btn" class="action-btn secondary">
-						<span class="icon">🎤</span> <span id="talk-btn-text">Intercom</span>
-						<div id="talk-wave" class="voice-wave hidden" style="display: none;">
-							<div class="bar"></div>
-							<div class="bar"></div>
-							<div class="bar"></div>
-							<div class="bar"></div>
-						</div>
-					</button>
-				</div>
-			</div>
 		</main>
+
+		<!-- Footer Kilit & Konuş Kontrolleri -->
+		<div class="controls-container">
+			<div class="controls-left">
+				<div class="footer-brand">
+					<img src="icon.png" class="footer-logo" alt="logo">
+					<h3>Kamera Gözcüsü</h3>
+				</div>
+				<select class="mode-select" title="View Mode">
+					<option value="single">Single</option>
+					<option value="dual">Dual</option>
+					<option value="triple">Triple Focus</option>
+					<option value="quad">Quad Grid</option>
+					<option value="five">5-Slot Focus</option>
+				</select>
+				<select class="camera-select" id="footer-camera-select">
+					<option value="" disabled selected>Loading Cameras...</option>
+				</select>
+				<button class="icon-btn settings-btn" title="Settings">⚙️</button>
+			</div>
+			<div class="controls-right">
+				<button id="open-outer-btn" class="action-btn unlock">
+					<span class="icon">🔓</span> Outer Door
+				</button>
+				<button id="open-inner-btn" class="action-btn unlock secondary-unlock">
+					<span class="icon">🚪</span> Inner Door
+				</button>
+				<button id="talk-btn" class="action-btn secondary">
+					<span class="icon">🎤</span> <span id="talk-btn-text">Intercom</span>
+					<div id="talk-wave" class="voice-wave hidden" style="display: none;">
+						<div class="bar"></div>
+						<div class="bar"></div>
+						<div class="bar"></div>
+						<div class="bar"></div>
+					</div>
+				</button>
+			</div>
+		</div>
 
 		<!-- Window Status Bar -->
 		<div id="status-bar" class="status-bar">

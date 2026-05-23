@@ -1,6 +1,6 @@
 {
   "name": "ha-pc-cam-monitor",
-  "productName": "HA PC Cam Monitor",
+  "productName": "Kamera Gözcüsü",
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
@@ -16,7 +16,10 @@
     "files": [
       "**/*",
       "!stream/**/*",
-      "!.env"
+      "!.env",
+      "!config.json",
+      "!.env.local",
+      "!**/*.log"
     ],
     "win": {
       "target": "nsis",
@@ -27,7 +30,10 @@
     ],
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "Kamera Gözcüsü"
     },
     "extraResources": [
       {

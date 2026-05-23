@@ -1,7 +1,10 @@
 const { app, BrowserWindow, screen, ipcMain, Tray, Menu, Notification, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
-require('dotenv').config();
+
+if (!app.isPackaged) {
+	require('dotenv').config();
+}
 
 // Single-Instance Lock to prevent port collision (EADDRINUSE) and tray-restore failures
 const gotTheLock = app.requestSingleInstanceLock();
@@ -150,7 +153,6 @@ if (process.platform === 'win32') {
 	// Clean up legacy manual shortcuts that caused duplicate programs listing
 	const legacyNames = [
 		'Camera Monitor.lnk',
-		'Kamera Gözcüsü.lnk',
 		'Kamera Gozcusu.lnk',
 		'cam monitor.lnk',
 		'Cam Monitor.lnk',

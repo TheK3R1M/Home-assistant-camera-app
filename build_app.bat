@@ -8,6 +8,8 @@ echo [1/3] Kilitli olabilecek aktif uygulama surecleri kapatiliyor...
 taskkill /f /im electron.exe >nul 2>&1
 taskkill /f /im "HA PC Cam Monitor.exe" >nul 2>&1
 taskkill /f /im "ha-pc-cam-monitor.exe" >nul 2>&1
+taskkill /f /im "Kamera Gözcüsü.exe" >nul 2>&1
+taskkill /f /im "Kamera Gozcusu.exe" >nul 2>&1
 timeout /t 2 /nobreak >nul
 
 echo.
