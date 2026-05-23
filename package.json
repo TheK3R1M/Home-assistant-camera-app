@@ -33,7 +33,8 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "Camera Monitor"
+      "shortcutName": "Camera Monitor",
+      "artifactName": "Cam Monitor Setup.${ext}"
     },
     "extraResources": [
       {
