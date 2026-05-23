@@ -266,6 +266,26 @@ npm run build
 
 ---
 
+## 🔄 Automatic Background Updates
+
+The application includes a built-in **Auto-Updater** that queries the GitHub releases feed automatically on startup and applies upgrades in the background.
+
+### How it works:
+1. **Pristine Settings Protection (No Lost Credentials!)**: The Auto-Updater only replaces the packaged application files. All of your personal connection details, camera RTSP URLs, and door entity IDs are stored safely inside the local system's user data directory (`AppData/Roaming/ha-pc-cam-monitor/config.json`), which is **never touched or deleted during updates**. Your configurations remain 100% intact!
+2. **Background Download**: If a new release version is detected on your GitHub repository, the app will show a system notification and download the new installer in the background silently.
+3. **Smooth Installation**: Once the download completes, a notification will inform the user. The app will automatically restart and apply the update after 10 seconds, or on the next launch.
+
+### How to Release a New Version:
+1. Update the `"version"` field in `package.json` (e.g., from `1.0.0` to `1.0.1`).
+2. Run `npm run build` to generate the new `Cam Monitor Setup.exe` and its `latest.yml` metadata descriptor.
+3. Push the changes to GitHub.
+4. Go to your GitHub Repository > **Releases** > Click **Draft a new release**.
+5. Tag the release exactly matching your version number (e.g., `v1.0.1`).
+6. **CRITICAL**: Upload both **`Cam Monitor Setup.exe`** and **`latest.yml`** (found inside the `dist-build` folder) to the release assets.
+7. Publish the release! All running client instances of **Camera Monitor** on the network will auto-update themselves within 5-10 seconds of their next launch!
+
+---
+
 ## 📝 License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for more information.

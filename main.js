@@ -1,6 +1,7 @@
 const { app, BrowserWindow, screen, ipcMain, Tray, Menu, Notification, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const { autoUpdater } = require('electron-updater');
 
 if (!app.isPackaged) {
 	require('dotenv').config();
@@ -714,15 +715,78 @@ ipcMain.on('person-detected', () => {
 });
 
 app.whenReady().then(() => {
-	// Create a dummy icon if it doesn't exist to prevent errors (optional, usually we just need a file)
 	createWindow();
 	createTray();
 
 	app.on('activate', () => {
 		if (BrowserWindow.getAllWindows().length === 0) createWindow();
 	});
+
+	// Trigger Auto-Updater check after startup (5s delay to ensure clean window layout load)
+	setTimeout(() => {
+		initializeAutoUpdater();
+	}, 5000);
 });
 
 app.on('window-all-closed', () => {
 	if (process.platform !== 'darwin') app.quit();
 });
+
+// --- Automatic Updates Handler ---
+function initializeAutoUpdater() {
+	// Only run auto-updater in production package to prevent local development noise
+	if (!app.isPackaged) {
+		console.log("[Auto-Updater] Disabled in local development mode.");
+		return;
+	}
+
+	console.log("[Auto-Updater] Initializing update check...");
+
+	// Log update details for troubleshooting
+	autoUpdater.logger = console;
+
+	// Check for updates automatically on startup and notify
+	autoUpdater.checkForUpdatesAndNotify();
+
+	// Listeners
+	autoUpdater.on('checking-for-update', () => {
+		console.log('[Auto-Updater] Checking for updates...');
+	});
+
+	autoUpdater.on('update-available', (info) => {
+		console.log('[Auto-Updater] A new update is available:', info.version);
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send('show-notification', 'Update Available', `Version ${info.version} is downloading in the background...`);
+		}
+	});
+
+	autoUpdater.on('update-not-available', (info) => {
+		console.log('[Auto-Updater] Update not available. Running latest version.');
+	});
+
+	autoUpdater.on('error', (err) => {
+		console.error('[Auto-Updater] Error encountered:', err);
+	});
+
+	autoUpdater.on('download-progress', (progressObj) => {
+		let log_message = "Download speed: " + progressObj.bytesPerSecond;
+		log_message = log_message + ' - Downloaded ' + progressObj.percent + '%';
+		log_message = log_message + ' (' + progressObj.transferred + "/" + progressObj.total + ')';
+		console.log('[Auto-Updater] ' + log_message);
+	});
+
+	autoUpdater.on('update-downloaded', (info) => {
+		console.log('[Auto-Updater] Update downloaded successfully! Installing on exit...');
+		
+		// Prompt user or notify
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send('show-notification', 'Update Ready', `Version ${info.version} has been downloaded and is ready to install!`);
+		}
+
+		// Quit and install immediately or after 10 seconds of notification
+		setTimeout(() => {
+			app.isQuitting = true;
+			autoUpdater.quitAndInstall();
+		}, 10000);
+	});
+}
