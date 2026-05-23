@@ -190,6 +190,7 @@ let haMessageId = 1;
 let haWsCallbacks = {};
 
 let isPaused = false;
+let isAppHidden = false;
 let sessionStartTime = null;
 let timerInterval = null;
 
@@ -1042,7 +1043,7 @@ for (let i = 2; i <= 5; i++) {
 			// Rebuild streaming connections
 			refreshStreams();
 			
-			showToastNotification('Camera Swapped', 'The camera was swapped with the main screen.', '🔄');
+			showToastNotification('Camera Swapped', 'The camera was swapped with the main screen.', 'ðŸ”„');
 		}
 	});
 }
@@ -1058,12 +1059,12 @@ playPauseBtn.addEventListener('click', () => {
 	});
 
 	if (isPaused) {
-		playPauseBtn.innerHTML = '<span class="icon">▶</span>';
+		playPauseBtn.innerHTML = '<span class="icon">â–¶</span>';
 		liveBadge.textContent = "PAUSED";
 		liveBadge.style.backgroundColor = "#555";
 	} else {
 		jumpToLive();
-		playPauseBtn.innerHTML = '<span class="icon">⏸</span>';
+		playPauseBtn.innerHTML = '<span class="icon">â¸</span>';
 		liveBadge.textContent = "LIVE";
 		liveBadge.style.backgroundColor = "#ef4444";
 	}
@@ -1110,7 +1111,7 @@ if (talkBtn) {
 // --- Glassmorphic In-App Toast & Audio Chime Entegrasyonu ---
 let toastTimeout = null;
 
-function showToastNotification(title, bodyText, icon = '🔔') {
+function showToastNotification(title, bodyText, icon = 'ðŸ””') {
 	if (toastTimeout) {
 		clearTimeout(toastTimeout);
 	}
@@ -1188,12 +1189,12 @@ function playAudioChime() {
 // --- IPC Notification Hooks ---
 ipcRenderer.on('doorbell-ring', () => {
 	connectionStatus.textContent = `Doorbell Rang!`;
-	showToastNotification('Doorbell Ringing!', 'The doorbell was triggered. Click to view the live feed.', '🔔');
+	showToastNotification('Doorbell Ringing!', 'The doorbell was triggered. Click to view the live feed.', 'ðŸ””');
 	setTimeout(jumpToLive, 500);
 });
 
 ipcRenderer.on('person-detected-event', () => {
-	showToastNotification('Motion Detected!', 'Someone was detected at the door!', '🏃');
+	showToastNotification('Motion Detected!', 'Someone was detected at the door!', 'ðŸƒ');
 	setTimeout(jumpToLive, 500);
 });
 
@@ -1635,14 +1636,14 @@ if (exportSettingsBtn) {
 			const encrypted = customEncrypt(jsonStr, CIPHER_KEY);
 			
 			navigator.clipboard.writeText(encrypted).then(() => {
-				showToastNotification('Settings Copied', 'Your encrypted settings have been successfully copied to the clipboard.', '📤');
+				showToastNotification('Settings Copied', 'Your encrypted settings have been successfully copied to the clipboard.', 'ðŸ“¤');
 			}).catch(err => {
 				console.error("Clipboard copy error:", err);
 				alert("Failed to copy settings: " + err.message);
 			});
 		} catch (e) {
 			console.error("Export error:", e);
-			showToastNotification('Export Error', e.message, '⚠️');
+			showToastNotification('Export Error', e.message, 'âš ï¸');
 		}
 	});
 }
@@ -1654,7 +1655,7 @@ if (importSettingsBtn) {
 		try {
 			const clipboardText = await navigator.clipboard.readText();
 			if (!clipboardText) {
-				showToastNotification('Clipboard Empty', 'No clipboard data found to paste.', '⚠️');
+				showToastNotification('Clipboard Empty', 'No clipboard data found to paste.', 'âš ï¸');
 				return;
 			}
 			
@@ -1747,10 +1748,10 @@ if (importSettingsBtn) {
 			connectHAWebSocket();
 			refreshStreams();
 			
-			showToastNotification('Settings Imported', 'All settings and channel matches have been successfully imported from the clipboard!', '📥');
+			showToastNotification('Settings Imported', 'All settings and channel matches have been successfully imported from the clipboard!', 'ðŸ“¥');
 		} catch (e) {
 			console.error("Import error:", e);
-			showToastNotification('Import Error', 'Failed to decrypt data. Please make sure you have copied valid encrypted settings.', '⚠️');
+			showToastNotification('Import Error', 'Failed to decrypt data. Please make sure you have copied valid encrypted settings.', 'âš ï¸');
 		}
 	});
 }
@@ -1968,7 +1969,7 @@ async function loadAIModel() {
 		
 		console.log("cocoSsd object classification loaded successfully.");
 		if (badge) {
-			badge.innerHTML = '● AI Watcher Active';
+			badge.innerHTML = 'â— AI Watcher Active';
 			badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 			badge.style.background = 'rgba(52, 199, 89, 0.15)';
 			badge.style.color = '#a3ffb8';
@@ -1977,7 +1978,7 @@ async function loadAIModel() {
 		console.error("cocoSsd model loading failed:", e);
 		const badge = document.getElementById('ai-status-badge');
 		if (badge) {
-			badge.innerHTML = '● Motion Watcher Active'; // Fallback mode active
+			badge.innerHTML = 'â— Motion Watcher Active'; // Fallback mode active
 			badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 			badge.style.background = 'rgba(52, 199, 89, 0.15)';
 			badge.style.color = '#a3ffb8';
@@ -2085,14 +2086,14 @@ function triggerMotionDetection(sourceRole = "", activeElement = null, canvas = 
 	
 	const badge = document.getElementById('ai-status-badge');
 	if (badge) {
-		badge.innerHTML = '● MOTION DETECTED!';
+		badge.innerHTML = 'â— MOTION DETECTED!';
 		badge.style.background = 'rgba(255, 149, 0, 0.35)'; // Orange for pure motion
 		badge.style.borderColor = 'rgba(255, 149, 0, 0.8)';
 		badge.style.color = '#ffffff';
 		
 		setTimeout(() => {
 			if (!cocoModel || !aiActive) {
-				badge.innerHTML = '● Motion Watcher Active';
+				badge.innerHTML = 'â— Motion Watcher Active';
 				badge.style.background = 'rgba(52, 199, 89, 0.15)';
 				badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 				badge.style.color = '#a3ffb8';
@@ -2104,7 +2105,7 @@ function triggerMotionDetection(sourceRole = "", activeElement = null, canvas = 
 // Unified helper function to apply smart focused view mode or swap Slot X to Slot 1 in grid views
 function applySmartFocusOrSwap(sourceRole, isPerson, score = null) {
 	const typeText = isPerson ? 'Person Detected' : 'Motion Detected';
-	const typeIcon = isPerson ? '🏃' : '🔔';
+	const typeIcon = isPerson ? 'ðŸƒ' : 'ðŸ””';
 	
 	// 1. If currently in single view mode, we don't swap grids.
 	if (viewMode === 'single') {
@@ -2315,6 +2316,10 @@ function startAIDetectionLoop() {
 	startRenderLoop();
 	
 	async function scanLoop() {
+		if (isAppHidden) {
+			aiDetectionInterval = setTimeout(scanLoop, 1000);
+			return;
+		}
 		if (isPaused) {
 			aiDetectionInterval = setTimeout(scanLoop, 800);
 			return;
@@ -2381,14 +2386,14 @@ function triggerPersonDetection(score, sourceRole = "", activeElement = null, ai
 	// Heartbeat color animation on HUD Status Badge
 	const badge = document.getElementById('ai-status-badge');
 	if (badge) {
-		badge.innerHTML = '● PERSON DETECTED!';
+		badge.innerHTML = 'â— PERSON DETECTED!';
 		badge.style.background = 'rgba(255, 59, 48, 0.35)';
 		badge.style.borderColor = 'rgba(255, 59, 48, 0.8)';
 		badge.style.color = '#ffffff';
 		
 		setTimeout(() => {
 			if (cocoModel && aiActive) {
-				badge.innerHTML = '● AI Watcher Active';
+				badge.innerHTML = 'â— AI Watcher Active';
 				badge.style.background = 'rgba(52, 199, 89, 0.15)';
 				badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 				badge.style.color = '#a3ffb8';
@@ -2437,7 +2442,7 @@ function restorePreviousLayout() {
 	videoContainerSingle.classList.remove('motion-detected-slot');
 	Object.values(slots).forEach(s => s.el.classList.remove('motion-detected-slot'));
 	
-	showToastNotification('Normal View', 'Camera layout has been restored.', '📺');
+	showToastNotification('Normal View', 'Camera layout has been restored.', 'ðŸ“º');
 }
 
 // --- Decoupled 60fps Bounding Box Interpolation Engine ---
@@ -2778,11 +2783,11 @@ async function openDoor(entityId, button) {
 		await axios.post(`${config.HA_URL}/api/services/switch/turn_on`, { entity_id: entityId }, {
 			headers: { 'Authorization': `Bearer ${config.HA_TOKEN}` }
 		});
-		button.innerHTML = '✅';
+		button.innerHTML = 'âœ…';
 		button.classList.add('success-pulse');
 	} catch (error) {
 		console.error("Home Assistant service unlock trigger failed:", error);
-		button.innerHTML = '⚠️';
+		button.innerHTML = 'âš ï¸';
 	}
 
 	setTimeout(() => {
@@ -2800,3 +2805,54 @@ ipcRenderer.on('config-updated', (event, newConfig) => {
 	config = newConfig;
 	streamPort = config.STREAM_PORT || 9999;
 });
+
+// Listen to window state change broadcast from main process
+ipcRenderer.on('window-state-changed', (event, state) => {
+	console.log(`[Window State Changed] Window became: ${state}`);
+	if (state === 'hidden') {
+		isAppHidden = true;
+		// Deconstruct all players to free NVR connections, CPU, and FFmpeg transcoders
+		['main', '1', '2', '3', '4', '5'].forEach(cleanupSlotPlayers);
+		console.log("[Window State Changed] Streams and AI completely suspended.");
+	} else if (state === 'visible') {
+		isAppHidden = false;
+		console.log("[Window State Changed] Window restored, resuming streams...");
+		refreshStreams();
+	}
+});
+
+// Setup Reset Defaults Button Handler in Advanced Settings
+const resetDefaultsBtn = document.getElementById('reset-defaults-btn');
+if (resetDefaultsBtn) {
+	resetDefaultsBtn.addEventListener('click', async () => {
+		const confirmReset = confirm("Are you sure you want to reset all configurations to defaults?\nThis will clear all camera URLs, Home Assistant tokens, and local storage variables.");
+		if (confirmReset) {
+			try {
+				const cleanDefaults = {
+					HA_URL: 'http://192.168.1.100:8123',
+					HA_TOKEN: '',
+					RTSP_URL: '',
+					DISPLAY_ID: 0,
+					DOORBELL_ENTITY: 'binary_sensor.doorbell',
+					DOOR_OUTER_ENTITY: 'switch.dis_kapi_kontrol_dis_kapi',
+					DOOR_INNER_ENTITY: 'switch.dis_kapi_kontrol_ic_kapi',
+					DOORBELL_ACTION: 'open',
+					AI_SENSITIVITY: 0.55,
+					AI_MIN_BOX_SIZE: 0.04
+				};
+				
+				// Save clean defaults to local config.json file in main process
+				await ipcRenderer.invoke('save-config', cleanDefaults);
+				
+				// Clear HTML5 local storage settings (saved layouts, selected streams, onboarding state)
+				localStorage.clear();
+				
+				// Reload window to trigger onboarding flow and apply clean slate
+				window.location.reload();
+			} catch (e) {
+				console.error("Failed to reset settings:", e);
+				alert("Error resetting settings. Please see console logs.");
+			}
+		}
+	});
+}

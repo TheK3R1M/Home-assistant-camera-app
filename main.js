@@ -147,16 +147,36 @@ app.commandLine.appendSwitch('disable-http-cache');
 if (process.platform === 'win32') {
 	app.setAppUserModelId('com.homeassistant.cameramonitor');
 	
-	// Clean up legacy manual shortcut that caused duplicate programs listing ("Camera Monitor" vs "HA PC Cam Monitor")
-	try {
-		const legacyShortcutPath = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Camera Monitor.lnk');
-		if (fs.existsSync(legacyShortcutPath)) {
-			fs.unlinkSync(legacyShortcutPath);
-			console.log("Startup: Removed legacy duplicate shortcut 'Camera Monitor.lnk'");
-		}
-	} catch (e) {
-		console.error("Startup: Failed to remove legacy shortcut:", e);
-	}
+	// Clean up legacy manual shortcuts that caused duplicate programs listing
+	const legacyNames = [
+		'Camera Monitor.lnk',
+		'Kamera Gözcüsü.lnk',
+		'Kamera Gozcusu.lnk',
+		'cam monitor.lnk',
+		'Cam Monitor.lnk',
+		'ha-pc-cam-monitor.lnk',
+		'HA PC Cam Monitor.lnk'
+	];
+	
+	const locations = [
+		path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs'),
+		path.join(app.getPath('desktop')),
+		path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup')
+	];
+	
+	locations.forEach(loc => {
+		legacyNames.forEach(name => {
+			try {
+				const fullPath = path.join(loc, name);
+				if (fs.existsSync(fullPath)) {
+					fs.unlinkSync(fullPath);
+					console.log(`Startup: Removed legacy duplicate shortcut '${name}' from '${loc}'`);
+				}
+			} catch (e) {
+				console.error(`Startup: Failed to remove legacy shortcut '${name}' from '${loc}':`, e.trim());
+			}
+		});
+	});
 }
 
 // --- Streaming Server ---
@@ -452,6 +472,30 @@ function createWindow() {
 			return false;
 		}
 		return true;
+	});
+
+	mainWindow.on('show', () => {
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send('window-state-changed', 'visible');
+		}
+	});
+
+	mainWindow.on('hide', () => {
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send('window-state-changed', 'hidden');
+		}
+	});
+
+	mainWindow.on('minimize', () => {
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send('window-state-changed', 'hidden');
+		}
+	});
+
+	mainWindow.on('restore', () => {
+		if (mainWindow && !mainWindow.isDestroyed()) {
+			mainWindow.webContents.send('window-state-changed', 'visible');
+		}
 	});
 }
 
