@@ -95,8 +95,8 @@ function loadConfig() {
 	config.DOOR_OUTER_ENTITY = config.DOOR_OUTER_ENTITY || process.env.DOOR_OUTER_ENTITY || 'switch.outer_door';
 	config.DOOR_INNER_ENTITY = config.DOOR_INNER_ENTITY || process.env.DOOR_INNER_ENTITY || 'switch.inner_door';
 	config.DOORBELL_ACTION = config.DOORBELL_ACTION || 'open';
-	config.AI_SENSITIVITY = config.AI_SENSITIVITY !== undefined ? parseFloat(config.AI_SENSITIVITY) : parseFloat(process.env.AI_SENSITIVITY || '0.55');
-	config.AI_MIN_BOX_SIZE = config.AI_MIN_BOX_SIZE !== undefined ? parseFloat(config.AI_MIN_BOX_SIZE) : parseFloat(process.env.AI_MIN_BOX_SIZE || '0.04');
+	config.AI_SENSITIVITY = config.AI_SENSITIVITY !== undefined ? parseFloat(config.AI_SENSITIVITY) : parseFloat(process.env.AI_SENSITIVITY || '0.40');
+	config.AI_MIN_BOX_SIZE = config.AI_MIN_BOX_SIZE !== undefined ? parseFloat(config.AI_MIN_BOX_SIZE) : parseFloat(process.env.AI_MIN_BOX_SIZE || '0.015');
 }
 
 function resolveRtspUrl(channel) {

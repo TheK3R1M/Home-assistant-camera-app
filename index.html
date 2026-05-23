@@ -46,7 +46,13 @@
 						</div>
 						<div class="setting-group" style="margin-top: 12px;">
 							<label for="wizard-ha-token">Long-Lived Access Token:</label>
-							<input type="password" id="wizard-ha-token" placeholder="Long-Lived Access Token..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box;">
+							<div style="position: relative; display: flex; align-items: center; margin-top: 4px;">
+								<input type="password" id="wizard-ha-token" placeholder="Long-Lived Access Token..." style="width: 100%; padding: 10px 80px 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box;">
+								<div style="position: absolute; right: 8px; display: flex; gap: 6px; align-items: center;">
+									<button id="toggle-wizard-token-visibility" type="button" class="icon-btn" style="padding: 4px; font-size: 12px; color: var(--text-secondary);" title="Show/Hide Token">👁️</button>
+									<button id="copy-wizard-token" type="button" class="icon-btn" style="padding: 4px; font-size: 12px; color: var(--text-secondary);" title="Copy Token">📋</button>
+								</div>
+							</div>
 							<span style="font-size: 9.5px; color: rgba(255,255,255,0.3); display: block; margin-top: 4px;">You can generate a token at the very bottom of your HA Profile page.</span>
 						</div>
 					</div>
@@ -131,7 +137,13 @@
 						</div>
 						<div class="setting-group" style="margin-top: 12px;">
 							<label for="ha-token-input">Long-Lived Access Token:</label>
-							<input type="password" id="ha-token-input" placeholder="Long-Lived Access Token..." style="width: 100%; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; margin-top: 4px; box-sizing: border-box; transition: all 0.2s;">
+							<div style="position: relative; display: flex; align-items: center; margin-top: 4px;">
+								<input type="password" id="ha-token-input" placeholder="Long-Lived Access Token..." style="width: 100%; padding: 10px 80px 10px 14px; border-radius: 10px; border: 1px solid var(--border-glass); background: rgba(255, 255, 255, 0.05); color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box; transition: all 0.2s;">
+								<div style="position: absolute; right: 8px; display: flex; gap: 6px; align-items: center;">
+									<button id="toggle-settings-token-visibility" type="button" class="icon-btn" style="padding: 4px; font-size: 12px; color: var(--text-secondary);" title="Show/Hide Token">👁️</button>
+									<button id="copy-settings-token" type="button" class="icon-btn" style="padding: 4px; font-size: 12px; color: var(--text-secondary);" title="Copy Token">📋</button>
+								</div>
+							</div>
 						</div>
 					</div>
 

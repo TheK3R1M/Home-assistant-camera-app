@@ -25,6 +25,11 @@ input, select, textarea, button {
 	font-family: inherit;
 }
 
+input, textarea, .copyable, [contenteditable="true"] {
+	user-select: text !important;
+	-webkit-user-select: text !important;
+}
+
 body {
 	margin: 0;
 	padding: 0;
@@ -1267,7 +1272,8 @@ main {
 	bottom: 24px;
 	left: 50%;
 	transform: translateX(-50%) translateY(0);
-	z-index: 100;
+	z-index: 99999 !important;
+	pointer-events: auto !important;
 	background: rgba(15, 23, 42, 0.45);
 	backdrop-filter: blur(25px) saturate(190%);
 	-webkit-backdrop-filter: blur(25px) saturate(190%);

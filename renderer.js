@@ -160,8 +160,8 @@ let config = {
 	DOOR_OUTER_ENTITY: 'switch.outer_door',
 	DOOR_INNER_ENTITY: 'switch.inner_door',
 	DOORBELL_ACTION: 'open',
-	AI_SENSITIVITY: 0.55,
-	AI_MIN_BOX_SIZE: 0.04
+	AI_SENSITIVITY: 0.40,
+	AI_MIN_BOX_SIZE: 0.015
 };
 
 let streamPort = 9999;
@@ -1219,7 +1219,15 @@ async function openOnboardingWizard() {
 	
 	// Prefill inputs
 	document.getElementById('wizard-ha-url').value = config.HA_URL || '';
-	document.getElementById('wizard-ha-token').value = config.HA_TOKEN || '';
+	const wizardTokenEl = document.getElementById('wizard-ha-token');
+	if (wizardTokenEl) {
+		wizardTokenEl.value = config.HA_TOKEN || '';
+		wizardTokenEl.type = 'password';
+	}
+	const toggleWizardTokenBtnEl = document.getElementById('toggle-wizard-token-visibility');
+	if (toggleWizardTokenBtnEl) {
+		toggleWizardTokenBtnEl.textContent = '👁️';
+	}
 	document.getElementById('wizard-rtsp-url').value = config.RTSP_URL || '';
 	
 	// Prefill radios
@@ -1300,7 +1308,15 @@ function updateWizardUI() {
 
 async function openSettingsModal() {
 	document.getElementById('ha-url-input').value = config.HA_URL || '';
-	document.getElementById('ha-token-input').value = config.HA_TOKEN || '';
+	const settingsTokenEl = document.getElementById('ha-token-input');
+	if (settingsTokenEl) {
+		settingsTokenEl.value = config.HA_TOKEN || '';
+		settingsTokenEl.type = 'password';
+	}
+	const toggleSettingsTokenBtnEl = document.getElementById('toggle-settings-token-visibility');
+	if (toggleSettingsTokenBtnEl) {
+		toggleSettingsTokenBtnEl.textContent = '👁️';
+	}
 	document.getElementById('rtsp-url-input').value = config.RTSP_URL || '';
 	
 	// Populate individual camera URLs
@@ -1395,6 +1411,73 @@ if (aiSlider && aiSliderVal) {
 if (wizardAiSlider && wizardAiSliderVal) {
 	wizardAiSlider.addEventListener('input', (e) => {
 		wizardAiSliderVal.textContent = '%' + e.target.value;
+	});
+}
+
+// --- Long-Lived Access Token Visibility & Copying Handlers ---
+const wizardTokenInput = document.getElementById('wizard-ha-token');
+const toggleWizardTokenBtn = document.getElementById('toggle-wizard-token-visibility');
+const copyWizardTokenBtn = document.getElementById('copy-wizard-token');
+
+if (wizardTokenInput && toggleWizardTokenBtn) {
+	toggleWizardTokenBtn.addEventListener('click', () => {
+		if (wizardTokenInput.type === 'password') {
+			wizardTokenInput.type = 'text';
+			toggleWizardTokenBtn.textContent = '🔒';
+		} else {
+			wizardTokenInput.type = 'password';
+			toggleWizardTokenBtn.textContent = '👁️';
+		}
+	});
+}
+
+if (wizardTokenInput && copyWizardTokenBtn) {
+	copyWizardTokenBtn.addEventListener('click', async () => {
+		const token = wizardTokenInput.value.trim();
+		if (!token) {
+			showToastNotification('Warning', 'Token field is empty', '⚠️');
+			return;
+		}
+		try {
+			await navigator.clipboard.writeText(token);
+			showToastNotification('Success', 'Token copied to clipboard!', '📋');
+		} catch (err) {
+			console.error('Failed to copy token:', err);
+			showToastNotification('Error', 'Failed to copy. Please select and copy manually.', '❌');
+		}
+	});
+}
+
+const settingsTokenInput = document.getElementById('ha-token-input');
+const toggleSettingsTokenBtn = document.getElementById('toggle-settings-token-visibility');
+const copySettingsTokenBtn = document.getElementById('copy-settings-token');
+
+if (settingsTokenInput && toggleSettingsTokenBtn) {
+	toggleSettingsTokenBtn.addEventListener('click', () => {
+		if (settingsTokenInput.type === 'password') {
+			settingsTokenInput.type = 'text';
+			toggleSettingsTokenBtn.textContent = '🔒';
+		} else {
+			settingsTokenInput.type = 'password';
+			toggleSettingsTokenBtn.textContent = '👁️';
+		}
+	});
+}
+
+if (settingsTokenInput && copySettingsTokenBtn) {
+	copySettingsTokenBtn.addEventListener('click', async () => {
+		const token = settingsTokenInput.value.trim();
+		if (!token) {
+			showToastNotification('Warning', 'Token field is empty', '⚠️');
+			return;
+		}
+		try {
+			await navigator.clipboard.writeText(token);
+			showToastNotification('Success', 'Token copied to clipboard!', '📋');
+		} catch (err) {
+			console.error('Failed to copy token:', err);
+			showToastNotification('Error', 'Failed to copy. Please select and copy manually.', '❌');
+		}
 	});
 }
 
@@ -1985,7 +2068,7 @@ async function loadAIModel() {
 		
 		console.log("cocoSsd object classification loaded successfully.");
 		if (badge) {
-			badge.innerHTML = 'â— AI Watcher Active';
+			badge.innerHTML = '\u25cf AI Watcher Active';
 			badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 			badge.style.background = 'rgba(52, 199, 89, 0.15)';
 			badge.style.color = '#a3ffb8';
@@ -1994,7 +2077,7 @@ async function loadAIModel() {
 		console.error("cocoSsd model loading failed:", e);
 		const badge = document.getElementById('ai-status-badge');
 		if (badge) {
-			badge.innerHTML = 'â— Motion Watcher Active'; // Fallback mode active
+			badge.innerHTML = '\u25cf Motion Watcher Active'; // Fallback mode active
 			badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 			badge.style.background = 'rgba(52, 199, 89, 0.15)';
 			badge.style.color = '#a3ffb8';
@@ -2102,14 +2185,14 @@ function triggerMotionDetection(sourceRole = "", activeElement = null, canvas = 
 	
 	const badge = document.getElementById('ai-status-badge');
 	if (badge) {
-		badge.innerHTML = 'â— MOTION DETECTED!';
+		badge.innerHTML = '\u25cf MOTION DETECTED!';
 		badge.style.background = 'rgba(255, 149, 0, 0.35)'; // Orange for pure motion
 		badge.style.borderColor = 'rgba(255, 149, 0, 0.8)';
 		badge.style.color = '#ffffff';
 		
 		setTimeout(() => {
 			if (!cocoModel || !aiActive) {
-				badge.innerHTML = 'â— Motion Watcher Active';
+				badge.innerHTML = '\u25cf Motion Watcher Active';
 				badge.style.background = 'rgba(52, 199, 89, 0.15)';
 				badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 				badge.style.color = '#a3ffb8';
@@ -2121,7 +2204,7 @@ function triggerMotionDetection(sourceRole = "", activeElement = null, canvas = 
 // Unified helper function to apply smart focused view mode or swap Slot X to Slot 1 in grid views
 function applySmartFocusOrSwap(sourceRole, isPerson, score = null) {
 	const typeText = isPerson ? 'Person Detected' : 'Motion Detected';
-	const typeIcon = isPerson ? 'ðŸƒ' : 'ðŸ””';
+	const typeIcon = isPerson ? 'ðŸ ƒ' : 'ðŸ””';
 	
 	// 1. If currently in single view mode, we don't swap grids.
 	if (viewMode === 'single') {
@@ -2275,14 +2358,18 @@ async function scanRole(role, activeElement, canvas) {
 			
 			const predictions = await cocoModel.detect(activeElement);
 			
-			const sens = config.AI_SENSITIVITY !== undefined ? config.AI_SENSITIVITY : 0.55;
-			const minSizeRatio = config.AI_MIN_BOX_SIZE !== undefined ? config.AI_MIN_BOX_SIZE : 0.04;
+			let sens = config.AI_SENSITIVITY !== undefined ? config.AI_SENSITIVITY : 0.45;
+			// Dynamically drop confidence score threshold when pixel motion is active to catch weird angles/distant profiles easily
+			if (hasMotion || activeMotionDetections[role]) {
+				sens = Math.max(0.25, sens - 0.15);
+			}
+			const minSizeRatio = config.AI_MIN_BOX_SIZE !== undefined ? config.AI_MIN_BOX_SIZE : 0.02;
 			
 			const filtered = predictions.filter(p => {
 				if (p.class !== 'person') return false;
 				if (p.score < sens) return false;
 				const [x, y, w, h] = p.bbox;
-				if (w < 15 || h < 15) return false;
+				if (w < 12 || h < 12) return false; // slightly more forgiving bounding box sizes for distant subjects
 				if (w < vWidth * minSizeRatio && h < vHeight * minSizeRatio) return false;
 				return true;
 			});
@@ -2408,14 +2495,14 @@ function triggerPersonDetection(score, sourceRole = "", activeElement = null, ai
 	// Heartbeat color animation on HUD Status Badge
 	const badge = document.getElementById('ai-status-badge');
 	if (badge) {
-		badge.innerHTML = 'â— PERSON DETECTED!';
+		badge.innerHTML = '\u25cf PERSON DETECTED!';
 		badge.style.background = 'rgba(255, 59, 48, 0.35)';
 		badge.style.borderColor = 'rgba(255, 59, 48, 0.8)';
 		badge.style.color = '#ffffff';
 		
 		setTimeout(() => {
 			if (cocoModel && aiActive) {
-				badge.innerHTML = 'â— AI Watcher Active';
+				badge.innerHTML = '\u25cf AI Watcher Active';
 				badge.style.background = 'rgba(52, 199, 89, 0.15)';
 				badge.style.borderColor = 'rgba(52, 199, 89, 0.4)';
 				badge.style.color = '#a3ffb8';
@@ -2859,8 +2946,8 @@ if (resetDefaultsBtn) {
 					DOOR_OUTER_ENTITY: 'switch.outer_door',
 					DOOR_INNER_ENTITY: 'switch.inner_door',
 					DOORBELL_ACTION: 'open',
-					AI_SENSITIVITY: 0.55,
-					AI_MIN_BOX_SIZE: 0.04
+					AI_SENSITIVITY: 0.40,
+					AI_MIN_BOX_SIZE: 0.015
 				};
 				
 				// Save clean defaults to local config.json file in main process
