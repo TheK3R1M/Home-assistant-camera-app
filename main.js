@@ -329,7 +329,10 @@ const streamServer = http.createServer((req, res) => {
 		ffmpegProcess.stdout.pipe(res);
 
 		// Handle processes close cleanly on browser disconnection
+		let isKilled = false;
 		const killFFmpeg = () => {
+			if (isKilled) return;
+			isKilled = true;
 			if (ffmpegProcess) {
 				try {
 					ffmpegProcess.kill('SIGKILL');
@@ -343,6 +346,13 @@ const streamServer = http.createServer((req, res) => {
 		res.on('close', killFFmpeg);
 		res.on('finish', killFFmpeg);
 		
+		ffmpegProcess.stderr.on('data', (data) => {
+			const output = data.toString();
+			if (output.includes('Error') || output.includes('failed') || output.includes('Server returned') || output.includes('Connection') || output.includes('Invalid')) {
+				console.error(`[MJPEG FFmpeg stderr Channel ${channelNum}]: ${output.trim()}`);
+			}
+		});
+
 		ffmpegProcess.on('error', (err) => {
 			console.error(`[MJPEG] FFmpeg error for Channel ${channelNum}:`, err.message);
 			killFFmpeg();
