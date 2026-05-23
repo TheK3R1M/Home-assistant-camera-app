@@ -130,6 +130,13 @@ function resolveRtspUrl(channel) {
 }
 
 function saveConfig(newConfig) {
+	if (newConfig.HA_URL) {
+		let url = newConfig.HA_URL.trim().replace(/\/$/, "");
+		if (!url.startsWith('http://') && !url.startsWith('https://')) {
+			url = 'http://' + url;
+		}
+		newConfig.HA_URL = url;
+	}
 	config = { ...config, ...newConfig };
 	try {
 		fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
