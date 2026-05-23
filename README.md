@@ -73,13 +73,13 @@ All settings are securely stored locally inside `config.json`. The application h
 
 ```json
 {
-  "HA_URL": "http://ev.local:8123",
+  "HA_URL": "http://homeassistant.local:8123",
   "HA_TOKEN": "YOUR_LONG_LIVED_ACCESS_TOKEN",
   "RTSP_URL": "rtsp://admin:password@192.168.1.100:554/stream1",
   "DISPLAY_ID": 25281923,
   "DOORBELL_ENTITY": "binary_sensor.doorbell",
-  "DOOR_OUTER_ENTITY": "switch.dis_kapi_kontrol_dis_kapi",
-  "DOOR_INNER_ENTITY": "switch.dis_kapi_kontrol_ic_kapi",
+  "DOOR_OUTER_ENTITY": "switch.outer_door",
+  "DOOR_INNER_ENTITY": "switch.inner_door",
   "DOORBELL_ACTION": "open",
   "AI_SENSITIVITY": 0.55,
   "AI_MIN_BOX_SIZE": 0.04
@@ -89,6 +89,8 @@ All settings are securely stored locally inside `config.json`. The application h
 *   `HA_URL`: The local or external network address of your Home Assistant server.
 *   `HA_TOKEN`: Long-Lived Access Token created in your Home Assistant user profile.
 *   `DISPLAY_ID`: The unique system ID of your targeted secondary monitor.
+*   `DOORBELL_ENTITY`: The entity ID of your physical doorbell or smart button (e.g., `binary_sensor.doorbell`). You can find this in Home Assistant by navigating to **Settings > Devices & Services > Entities** and searching for your doorbell name.
+*   `DOOR_OUTER_ENTITY` / `DOOR_INNER_ENTITY`: The entity ID of the smart switches, buttons, or relays controlling your physical doors or locks (e.g., `switch.outer_door`). You can locate these in the same **Entities** menu under Home Assistant. If you only have a single door, configure `DOOR_OUTER_ENTITY` and you can leave the inner entity blank.
 *   `DOORBELL_ACTION`: `open` (automatically show window and pop up feed) or `notify` (show a native Windows push notification banner first).
 
 ---
@@ -201,7 +203,7 @@ graph LR
    - Launch this Desktop App.
    - Fill in your `HA_URL` and `HA_TOKEN` in the Setup Wizard.
    - Open Settings, click **"Configure Individual RTSP URLs"** to toggle individual feeds, and copy-paste your camera stream URLs directly.
-   - Align your lock entities (`switch.dis_kapi_kontrol_dis_kapi` etc.) and enjoy sub-100ms notifications, dual lock triggers, and autonomous multi-screen popup controls!
+   - Align your lock entities (e.g., `switch.outer_door` or `lock.front_door`) and enjoy sub-100ms notifications, dual lock triggers, and autonomous multi-screen popup controls!
 
 ---
 

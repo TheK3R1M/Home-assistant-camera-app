@@ -91,8 +91,8 @@ function loadConfig() {
 	
 	config.DISPLAY_ID = config.DISPLAY_ID !== undefined ? parseInt(config.DISPLAY_ID) : parseInt(process.env.DISPLAY_ID || '0');
 	config.DOORBELL_ENTITY = config.DOORBELL_ENTITY || process.env.DOORBELL_ENTITY || 'binary_sensor.doorbell';
-	config.DOOR_OUTER_ENTITY = config.DOOR_OUTER_ENTITY || process.env.DOOR_OUTER_ENTITY || 'switch.dis_kapi_kontrol_dis_kapi';
-	config.DOOR_INNER_ENTITY = config.DOOR_INNER_ENTITY || process.env.DOOR_INNER_ENTITY || 'switch.dis_kapi_kontrol_ic_kapi';
+	config.DOOR_OUTER_ENTITY = config.DOOR_OUTER_ENTITY || process.env.DOOR_OUTER_ENTITY || 'switch.outer_door';
+	config.DOOR_INNER_ENTITY = config.DOOR_INNER_ENTITY || process.env.DOOR_INNER_ENTITY || 'switch.inner_door';
 	config.DOORBELL_ACTION = config.DOORBELL_ACTION || 'open';
 	config.AI_SENSITIVITY = config.AI_SENSITIVITY !== undefined ? parseFloat(config.AI_SENSITIVITY) : parseFloat(process.env.AI_SENSITIVITY || '0.55');
 	config.AI_MIN_BOX_SIZE = config.AI_MIN_BOX_SIZE !== undefined ? parseFloat(config.AI_MIN_BOX_SIZE) : parseFloat(process.env.AI_MIN_BOX_SIZE || '0.04');

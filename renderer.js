@@ -157,8 +157,8 @@ let config = {
 	RTSP_URL: '',
 	DISPLAY_ID: 0,
 	DOORBELL_ENTITY: 'binary_sensor.doorbell',
-	DOOR_OUTER_ENTITY: 'switch.dis_kapi_kontrol_dis_kapi',
-	DOOR_INNER_ENTITY: 'switch.dis_kapi_kontrol_ic_kapi',
+	DOOR_OUTER_ENTITY: 'switch.outer_door',
+	DOOR_INNER_ENTITY: 'switch.inner_door',
 	DOORBELL_ACTION: 'open',
 	AI_SENSITIVITY: 0.55,
 	AI_MIN_BOX_SIZE: 0.04
@@ -1073,17 +1073,17 @@ playPauseBtn.addEventListener('click', () => {
 closeBtn.addEventListener('click', () => window.close());
 document.getElementById('minimize-btn').addEventListener('click', () => ipcRenderer.send('minimize-window'));
 
-if (doorOuterBtn) doorOuterBtn.addEventListener('click', (e) => openDoor(config.DOOR_OUTER_ENTITY || 'switch.dis_kapi_kontrol_dis_kapi', e.currentTarget));
-if (doorInnerBtn) doorInnerBtn.addEventListener('click', (e) => openDoor(config.DOOR_INNER_ENTITY || 'switch.dis_kapi_kontrol_ic_kapi', e.currentTarget));
+if (doorOuterBtn) doorOuterBtn.addEventListener('click', (e) => openDoor(config.DOOR_OUTER_ENTITY || 'switch.outer_door', e.currentTarget));
+if (doorInnerBtn) doorInnerBtn.addEventListener('click', (e) => openDoor(config.DOOR_INNER_ENTITY || 'switch.inner_door', e.currentTarget));
 
-if (widgetUnlockOuter) widgetUnlockOuter.addEventListener('click', (e) => openDoor(config.DOOR_OUTER_ENTITY || 'switch.dis_kapi_kontrol_dis_kapi', e.currentTarget));
-if (widgetUnlockInner) widgetUnlockInner.addEventListener('click', (e) => openDoor(config.DOOR_INNER_ENTITY || 'switch.dis_kapi_kontrol_ic_kapi', e.currentTarget));
+if (widgetUnlockOuter) widgetUnlockOuter.addEventListener('click', (e) => openDoor(config.DOOR_OUTER_ENTITY || 'switch.outer_door', e.currentTarget));
+if (widgetUnlockInner) widgetUnlockInner.addEventListener('click', (e) => openDoor(config.DOOR_INNER_ENTITY || 'switch.inner_door', e.currentTarget));
 
 // Window Drag Header Quick Actions
 const headerUnlockOuter = document.getElementById('header-unlock-outer');
 const headerUnlockInner = document.getElementById('header-unlock-inner');
-if (headerUnlockOuter) headerUnlockOuter.addEventListener('click', (e) => openDoor(config.DOOR_OUTER_ENTITY || 'switch.dis_kapi_kontrol_dis_kapi', e.currentTarget));
-if (headerUnlockInner) headerUnlockInner.addEventListener('click', (e) => openDoor(config.DOOR_INNER_ENTITY || 'switch.dis_kapi_kontrol_ic_kapi', e.currentTarget));
+if (headerUnlockOuter) headerUnlockOuter.addEventListener('click', (e) => openDoor(config.DOOR_OUTER_ENTITY || 'switch.outer_door', e.currentTarget));
+if (headerUnlockInner) headerUnlockInner.addEventListener('click', (e) => openDoor(config.DOOR_INNER_ENTITY || 'switch.inner_door', e.currentTarget));
 
 // --- Voice Wave Intercom Controls ---
 let isTalking = false;
@@ -1482,8 +1482,8 @@ if (saveSettingsBtn) {
 		const rtspUrl5 = document.getElementById('rtsp-url-5-input').value.trim();
 		
 		const doorbellEntityInput = document.getElementById('doorbell-entity-input').value.trim() || 'binary_sensor.doorbell';
-		const doorOuterEntityInput = document.getElementById('door-outer-entity-input').value.trim() || 'switch.dis_kapi_kontrol_dis_kapi';
-		const doorInnerEntityInput = document.getElementById('door-inner-entity-input').value.trim() || 'switch.dis_kapi_kontrol_ic_kapi';
+		const doorOuterEntityInput = document.getElementById('door-outer-entity-input').value.trim() || 'switch.outer_door';
+		const doorInnerEntityInput = document.getElementById('door-inner-entity-input').value.trim() || 'switch.inner_door';
 		
 		let selectedAction = 'open';
 		settingsRadios.forEach(r => { if (r.checked) selectedAction = r.value; });
@@ -2834,8 +2834,8 @@ if (resetDefaultsBtn) {
 					RTSP_URL: '',
 					DISPLAY_ID: 0,
 					DOORBELL_ENTITY: 'binary_sensor.doorbell',
-					DOOR_OUTER_ENTITY: 'switch.dis_kapi_kontrol_dis_kapi',
-					DOOR_INNER_ENTITY: 'switch.dis_kapi_kontrol_ic_kapi',
+					DOOR_OUTER_ENTITY: 'switch.outer_door',
+					DOOR_INNER_ENTITY: 'switch.inner_door',
 					DOORBELL_ACTION: 'open',
 					AI_SENSITIVITY: 0.55,
 					AI_MIN_BOX_SIZE: 0.04
