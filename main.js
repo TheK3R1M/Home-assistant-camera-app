@@ -152,7 +152,7 @@ if (process.platform === 'win32') {
 	
 	// Clean up legacy manual shortcuts that caused duplicate programs listing
 	const legacyNames = [
-		'Camera Monitor.lnk',
+		'Kamera Gözcüsü.lnk',
 		'Kamera Gozcusu.lnk',
 		'cam monitor.lnk',
 		'Cam Monitor.lnk',

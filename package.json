@@ -1,6 +1,6 @@
 {
   "name": "ha-pc-cam-monitor",
-  "productName": "Kamera Gözcüsü",
+  "productName": "Camera Monitor",
   "version": "1.0.0",
   "main": "main.js",
   "scripts": {
@@ -33,7 +33,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": "always",
       "createStartMenuShortcut": true,
-      "shortcutName": "Kamera Gözcüsü"
+      "shortcutName": "Camera Monitor"
     },
     "extraResources": [
       {

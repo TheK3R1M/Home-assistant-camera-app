@@ -1246,7 +1246,7 @@ async function openOnboardingWizard() {
 		const displays = await ipcRenderer.invoke('get-displays');
 		if (wizardDisplaySelect) {
 			wizardDisplaySelect.innerHTML = displays.map(d => 
-				`<option value="${d.id}" ${d.id === config.DISPLAY_ID ? 'selected' : ''}>${d.label} ${d.isPrimary ? '(Birincil)' : ''}</option>`
+				`<option value="${d.id}" ${d.id === config.DISPLAY_ID ? 'selected' : ''}>${d.label} ${d.isPrimary ? '(Primary)' : ''}</option>`
 			).join('');
 		}
 	} catch (e) {
@@ -1347,7 +1347,7 @@ async function openSettingsModal() {
 		const displaySelect = document.getElementById('display-select');
 		if (displaySelect) {
 			displaySelect.innerHTML = displays.map(d => 
-				`<option value="${d.id}" ${d.id === config.DISPLAY_ID ? 'selected' : ''}>${d.label} ${d.isPrimary ? '(Birincil)' : ''}</option>`
+				`<option value="${d.id}" ${d.id === config.DISPLAY_ID ? 'selected' : ''}>${d.label} ${d.isPrimary ? '(Primary)' : ''}</option>`
 			).join('');
 		}
 	} catch (e) {

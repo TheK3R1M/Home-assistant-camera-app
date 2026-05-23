@@ -1,11 +1,11 @@
 @echo off
-title Kamera Gozcusu - GitHub Yukleme Sihirbazi
+title Camera Monitor - GitHub Upload Wizard
 echo ==========================================
-echo       GITHUB KOD YUKLEME ARACI (GIT PUSH)  
+echo       GITHUB CODE UPLOAD TOOL (GIT PUSH)  
 echo ==========================================
 echo.
-echo Bu arac, en son guncellenen kodlari otomatik olarak GitHub repomuza yukler.
-echo Lutfen bekleyin...
+echo This tool automatically uploads the latest updated code to our GitHub repository.
+echo Please wait...
 echo.
 
 cd /d "%~dp0"
@@ -13,8 +13,8 @@ cd /d "%~dp0"
 :: Check if git is installed
 where git >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [HATA] Bilgisayarinizda Git yuklu bulunamadi!
-    echo Lutfen Git'i https://git-scm.com/ adresinden yukleyin ve tekrar deneyin.
+    echo [ERROR] Git could not be found on your computer!
+    echo Please install Git from https://git-scm.com/ and try again.
     echo.
     pause
     exit /b
@@ -22,33 +22,33 @@ if %errorlevel% neq 0 (
 
 :: Git repository check and init
 if not exist ".git" (
-    echo Git deposu baslatiliyor...
+    echo Initializing Git repository...
     git init
 )
 
 :: Configure remote origin with the correct repo name
 git remote remove origin >nul 2>&1
 git remote add origin https://github.com/TheK3R1M/Home-assistant-camera-app
-echo Remote GitHub adresi baglandi: https://github.com/TheK3R1M/Home-assistant-camera-app
+echo Remote GitHub address linked: https://github.com/TheK3R1M/Home-assistant-camera-app
 
 :: Add and commit
 echo.
-echo Kodlar ekleniyor...
+echo Adding files...
 git add .
 echo.
-echo Commit olusturuluyor...
-git commit -m "feat: low-latency streaming and premium UI layout enhancements"
+echo Creating commit...
+git commit -m "feat: complete translation to English, rename product to Camera Monitor, and add interactive NSIS setup"
 
 :: Push to main branch
 echo.
-echo GitHub'a pushlaniyor (Ana dal: main)...
+echo Pushing to GitHub (Branch: main)...
 git branch -M main
 git push -f -u origin main
 
 echo.
 echo ==========================================
-echo Kodlar basariyla GitHub'a pushlandi!
-echo Artik GitHub sayfanizi yenileyip, Releases kismindan .exe dosyasini yukleyebilirsiniz.
+echo Code successfully pushed to GitHub!
+echo You can now refresh your GitHub page and download the .exe installer from the Releases section.
 echo.
-echo Kapatmak icin bir tusa basin...
+echo Press any key to close...
 pause > nul
