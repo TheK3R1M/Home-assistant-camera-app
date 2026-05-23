@@ -18,6 +18,8 @@ stream/
 # Local credentials and configuration files
 config.json
 .env
+automations.yaml
+configuration.yaml
 
 # Logs
 npm-debug.log*
