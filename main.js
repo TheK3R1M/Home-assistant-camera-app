@@ -327,12 +327,10 @@ const streamServer = http.createServer((req, res) => {
 		// Spawn lightweight FFmpeg for immediate JPEG push without writing to disk
 		const { spawn } = require('child_process');
 		const ffmpegProcess = spawn(ffmpegPath, [
-			'-hwaccel', 'auto', // Enable GPU decoding to save massive CPU
 			'-rtsp_transport', 'tcp',
 			'-fflags', 'nobuffer+genpts', // genpts helps with timestamp errors
 			'-flags', 'low_delay',
 			'-strict', 'experimental',
-			'-threads', '1', // Prevent multithreading overload across 5 streams
 			'-analyzeduration', '100000',
 			'-probesize', '100000',
 			'-i', tspUrl,
