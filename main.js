@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, ipcMain, Tray, Menu, Notification, shell } = require('electron');
+const { app, BrowserWindow, screen, ipcMain, Tray, Menu, Notification, shell, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
@@ -80,6 +80,17 @@ function loadConfig() {
 		}
 	}
 	
+	// In local development mode, prioritize .env values to prevent credential mismatch confusion
+	if (!app.isPackaged) {
+		if (process.env.HA_URL) config.HA_URL = process.env.HA_URL;
+		if (process.env.HA_TOKEN) config.HA_TOKEN = process.env.HA_TOKEN;
+		if (process.env.RTSP_URL) config.RTSP_URL = process.env.RTSP_URL;
+		if (process.env.DISPLAY_ID) config.DISPLAY_ID = parseInt(process.env.DISPLAY_ID);
+		if (process.env.CAMERA_ENTITY) config.CAMERA_ENTITY = process.env.CAMERA_ENTITY;
+		if (process.env.DOOR_OUTER_ENTITY) config.DOOR_OUTER_ENTITY = process.env.DOOR_OUTER_ENTITY;
+		if (process.env.DOOR_INNER_ENTITY) config.DOOR_INNER_ENTITY = process.env.DOOR_INNER_ENTITY;
+	}
+	
 	// Fallback/Merge with .env or defaults (generic local network defaults)
 	config.HA_URL = config.HA_URL || process.env.HA_URL || 'http://192.168.1.100:8123';
 	config.HA_TOKEN = config.HA_TOKEN || process.env.HA_TOKEN || '';
@@ -153,6 +164,9 @@ loadConfig();
 app.commandLine.appendSwitch('disable-chip-rendering');
 app.commandLine.appendSwitch('disable-gpu-shader-disk-cache');
 app.commandLine.appendSwitch('disable-http-cache');
+app.commandLine.appendSwitch('disable-background-timer-throttling');
+app.commandLine.appendSwitch('disable-backgrounding-occluded-windows');
+app.commandLine.appendSwitch('disable-renderer-backgrounding');
 
 // Required for Windows Notifications to work (matching the installer appId to avoid shortcut duplication)
 if (process.platform === 'win32') {
@@ -215,6 +229,7 @@ try {
 
 // --- Multi-Stream Management ---
 let activeCommands = {}; // Map: channelId -> ffmpegCommand
+let activeMjpegStreams = {}; // Map: streamId -> killFunction
 
 const startHlsStream = (channel) => {
 	if (activeCommands[channel]) return; // Already running
@@ -292,12 +307,13 @@ const streamServer = http.createServer((req, res) => {
 	// MJPEG Ultra-Low Latency streaming endpoint
 	if (url.pathname === '/mjpeg') {
 		const channel = url.searchParams.get('channel') || '1';
+		const streamId = url.searchParams.get('id') || channel;
 		const channelNum = channel.startsWith('rtsp_') ? channel.replace('rtsp_', '') : channel;
 
 		// Resolve RTSP URL using helper
 		const tspUrl = resolveRtspUrl(channel);
 
-		console.log(`[MJPEG] Direct low-latency request for Channel ${channelNum}: ${tspUrl}`);
+		console.log(`[MJPEG] Direct low-latency request for Channel ${channelNum} (ID: ${streamId}): ${tspUrl}`);
 
 		// Write headers for MJPEG streaming
 		res.writeHead(200, {
@@ -311,15 +327,18 @@ const streamServer = http.createServer((req, res) => {
 		// Spawn lightweight FFmpeg for immediate JPEG push without writing to disk
 		const { spawn } = require('child_process');
 		const ffmpegProcess = spawn(ffmpegPath, [
+			'-hwaccel', 'auto', // Enable GPU decoding to save massive CPU
 			'-rtsp_transport', 'tcp',
-			'-fflags', 'nobuffer',
+			'-fflags', 'nobuffer+genpts', // genpts helps with timestamp errors
 			'-flags', 'low_delay',
 			'-strict', 'experimental',
+			'-threads', '1', // Prevent multithreading overload across 5 streams
 			'-analyzeduration', '100000',
 			'-probesize', '100000',
 			'-i', tspUrl,
 			'-c:v', 'mjpeg',
-			'-q:v', '5', // High quality, low bandwidth overhead (1-31)
+			'-q:v', '7', // Slightly lower quality to save CPU (1-31, lower is better)
+			'-r', '5', // Limit to 5 fps to save massive CPU
 			'-an', // Disable audio for MJPEG
 			'-f', 'mpjpeg',
 			'-boundary_tag', 'ffserver',
@@ -336,10 +355,18 @@ const streamServer = http.createServer((req, res) => {
 			if (ffmpegProcess) {
 				try {
 					ffmpegProcess.kill('SIGKILL');
-					console.log(`[MJPEG] FFmpeg stream for Channel ${channelNum} cleanly killed on socket close.`);
+					console.log(`[MJPEG] FFmpeg stream for Channel ${channelNum} cleanly killed.`);
 				} catch (err) {}
 			}
+			if (activeMjpegStreams[streamId]) {
+				delete activeMjpegStreams[streamId];
+			}
+			try {
+				res.end();
+			} catch(e) {}
 		};
+		
+		activeMjpegStreams[streamId] = killFFmpeg;
 
 		req.on('close', killFFmpeg);
 		req.on('end', killFFmpeg);
@@ -358,6 +385,18 @@ const streamServer = http.createServer((req, res) => {
 			killFFmpeg();
 		});
 
+		return;
+	}
+
+	// Explicit endpoint to kill an MJPEG stream by ID
+	if (url.pathname === '/stop-mjpeg') {
+		const streamId = url.searchParams.get('id');
+		if (streamId && activeMjpegStreams[streamId]) {
+			console.log(`[MJPEG] Explicitly stopping stream ID: ${streamId}`);
+			activeMjpegStreams[streamId]();
+		}
+		res.writeHead(200);
+		res.end('Stopped');
 		return;
 	}
 
@@ -457,13 +496,21 @@ startStreamServer(streamPort);
 
 function createWindow() {
 	const displays = screen.getAllDisplays();
-	const targetDisplay = displays.find(d => d.id === config.DISPLAY_ID) || displays[0];
+	// Try to find by ID (allowing string/number coercion)
+	const targetDisplay = displays.find(d => d.id == config.DISPLAY_ID) || screen.getPrimaryDisplay();
+	const { x, y, width, height } = targetDisplay.workArea;
+
+	// Calculate bottom right corner of the TARGET display
+	const winWidth = 800;
+	const winHeight = 600;
+	const posX = Math.floor(x + width - winWidth - 20); // 20px padding from right
+	const posY = Math.floor(y + height - winHeight - 20); // 20px padding from bottom
 
 	mainWindow = new BrowserWindow({
-		x: targetDisplay.bounds.x + 50,
-		y: targetDisplay.bounds.y + 50,
-		width: 800,
-		height: 600,
+		x: posX,
+		y: posY,
+		width: winWidth,
+		height: winHeight,
 		show: false, // Keep false initially, show when ready
 		frame: false,
 		titleBarStyle: 'hidden',
@@ -485,20 +532,27 @@ function createWindow() {
 		mainWindow.focus();
 	});
 
+	mainWindow.on('minimize', (event) => {
+		event.preventDefault();
+		hideWindow();
+	});
+	
 	mainWindow.on('close', (event) => {
-		// Close to Tray: Hide instead of Quit
 		if (!app.isQuitting) {
 			event.preventDefault();
-			mainWindow.hide();
-			return false;
+			hideWindow();
 		}
-		return true;
 	});
 
 	mainWindow.on('show', () => {
 		if (mainWindow && !mainWindow.isDestroyed()) {
 			mainWindow.webContents.send('window-state-changed', 'visible');
 		}
+	});
+
+	// Pipe Renderer console to Main terminal for debugging
+	mainWindow.webContents.on('console-message', (event, level, message, line, sourceId) => {
+		console.log(`[Renderer] ${message}`);
 	});
 
 	mainWindow.on('hide', () => {
@@ -540,18 +594,46 @@ function createTray() {
 	tray.on('click', () => showWindow());
 }
 
+function hideWindow() {
+	if (mainWindow) {
+		mainWindow.setSkipTaskbar(true); // Remove from taskbar
+		// Instead of moving off-screen which crashes GPU compositor (DWM), we use opacity
+		mainWindow.setOpacity(0);
+		mainWindow.setIgnoreMouseEvents(true);
+		mainWindow.webContents.send('window-state-changed', 'hidden');
+	}
+}
+
 function showWindow() {
 	if (mainWindow) {
-		mainWindow.show();
 		if (mainWindow.isMinimized()) {
 			mainWindow.restore();
 		}
+		
+		// Ensure the window is on the correct screen just in case it was dragged away
+		const displays = screen.getAllDisplays();
+		const targetDisplay = displays.find(d => d.id == config.DISPLAY_ID) || screen.getPrimaryDisplay();
+		const { x, y, width, height } = targetDisplay.workArea;
+		
+		const winBounds = mainWindow.getBounds();
+		const posX = Math.floor(x + width - winBounds.width - 20);
+		const posY = Math.floor(y + height - winBounds.height - 20);
+		
+		mainWindow.setPosition(posX, posY);
+		
+		mainWindow.setSkipTaskbar(false); // Show in taskbar
+		mainWindow.setOpacity(1); // Make visible again
+		mainWindow.setIgnoreMouseEvents(false); // Allow clicking
+		
+		mainWindow.show();
+		mainWindow.setAlwaysOnTop(true);
 		mainWindow.focus();
-		mainWindow.setAlwaysOnTop(true, 'screen-saver');
+		app.focus();
 		mainWindow.setAlwaysOnTop(false);
 		if (process.platform === 'win32') {
 			mainWindow.flashFrame(true);
 		}
+		mainWindow.webContents.send('window-state-changed', 'visible');
 	}
 }
 
@@ -746,6 +828,16 @@ app.whenReady().then(() => {
 	setTimeout(() => {
 		initializeAutoUpdater();
 	}, 5000);
+	
+	// Diagnostic Shortcut for testing Focus/Popup
+	globalShortcut.register('CommandOrControl+Shift+D', () => {
+		console.log("[Diagnostic] Ctrl+Shift+D pressed, manually triggering doorbell...");
+		handleDoorbellTrigger();
+	});
+});
+
+app.on('will-quit', () => {
+	globalShortcut.unregisterAll();
 });
 
 app.on('window-all-closed', () => {

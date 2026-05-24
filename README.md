@@ -69,29 +69,46 @@ Ensure you have the following installed on your machine:
 
 ## ⚙️ Configuration Schema
 
-All settings are securely stored locally inside `config.json`. The application handles this automatically, but you can manually inspect or edit it:
+**🚨 ÖNEMLİ BİLGİ (GELİŞTİRİCİLER İÇİN):**
+Eğer projeyi Github'dan indirip kaynak kodundan `npm start` ile çalıştırıyorsanız, uygulama **`config.json` dosyasını tamamen yok sayar** ve ayarları kök dizindeki **`.env`** dosyasından zorla okur! Bu özellik, kodunuzu Github'a yüklerken (push) kişisel şifrelerinizin sızmasını engellemek için tasarlanmıştır (`.gitignore` dosyasında `.env` gizlenmiştir).
 
-```json
-{
-  "HA_URL": "http://homeassistant.local:8123",
-  "HA_TOKEN": "YOUR_LONG_LIVED_ACCESS_TOKEN",
-  "RTSP_URL": "rtsp://admin:password@192.168.1.100:554/stream1",
-  "DISPLAY_ID": 25281923,
-  "DOORBELL_ENTITY": "binary_sensor.doorbell",
-  "DOOR_OUTER_ENTITY": "switch.outer_door",
-  "DOOR_INNER_ENTITY": "switch.inner_door",
-  "DOORBELL_ACTION": "open",
-  "AI_SENSITIVITY": 0.55,
-  "AI_MIN_BOX_SIZE": 0.04
-}
+Uygulamayı derleyip (build) kurduğunuzda ise ayarlar `AppData/Roaming/ha-pc-cam-monitor/config.json` içine kaydedilir ve oradan okunur.
+
+### 🛠️ Kurulum Adımları (Geliştirici Ortamı İçin)
+Projeyi indirdikten sonra ilk yapmanız gereken şey kök dizinde bir `.env` dosyası oluşturmak (veya var olanı düzenlemek) ve bilgilerinizi girmektir:
+
+```env
+# Home Assistant Adresi (ev.local gibi mDNS adresleri Token reddine sebep olabilir, Gerçek IP kullanın!)
+HA_URL=http://192.168.1.100:8123
+
+# Home Assistant Uzun Ömürlü Jeton (Long-Lived Access Token)
+HA_TOKEN=eyJhbGciOiJIUzI...
+
+# Kamera RTSP Adresi
+RTSP_URL=rtsp://kullanici:sifre@192.168.1.81:554/cam/realmonitor?channel=1&subtype=1
+
+# (Opsiyonel) Çıkacağı İkinci Ekranın ID'si
+DISPLAY_ID=1269354008
 ```
 
-*   `HA_URL`: The local or external network address of your Home Assistant server.
-*   `HA_TOKEN`: Long-Lived Access Token created in your Home Assistant user profile.
-*   `DISPLAY_ID`: The unique system ID of your targeted secondary monitor.
-*   `DOORBELL_ENTITY`: The entity ID of your physical doorbell or smart button (e.g., `binary_sensor.doorbell`). You can find this in Home Assistant by navigating to **Settings > Devices & Services > Entities** and searching for your doorbell name.
-*   `DOOR_OUTER_ENTITY` / `DOOR_INNER_ENTITY`: The entity ID of the smart switches, buttons, or relays controlling your physical doors or locks (e.g., `switch.outer_door`). You can locate these in the same **Entities** menu under Home Assistant. If you only have a single door, configure `DOOR_OUTER_ENTITY` and you can leave the inner entity blank.
-*   `DOORBELL_ACTION`: `open` (automatically show window and pop up feed) or `notify` (show a native Windows push notification banner first).
+### 🔑 Jeton (Token) Nasıl Alınır?
+Uygulamanın Home Assistant'a bağlanabilmesi için uzun ömürlü bir yetkilendirme şifresi gerekir:
+1. Home Assistant arayüzüne girin.
+2. Sol en alttaki **Profil Resminize** tıklayın.
+3. Üst sekmelerden **Güvenlik (Security)** sekmesine geçin.
+4. En alta kaydırın ve **Uzun Ömürlü Jetonlar (Long-Lived Access Tokens)** bölümünden "Jeton Oluştur" butonuna basın.
+5. Bir isim verin (örn: `PC-Kamera-Monitor`) ve çıkan upuzun şifreyi kopyalayıp `.env` dosyanızdaki `HA_TOKEN` karşısına **tırnaksız** şekilde yapıştırın.
+
+> **💡 İPUCU:** `HA_URL` adresine `ev.local` yazdığınızda Home Assistant ağ güvenlik politikaları gereği jetonunuzu geçersiz sayabilir (Auth Token Rejected hatası). Bu yüzden mutlaka `192.168.1.100` gibi gerçek ve sabit bir IP adresi yazın.
+
+---
+
+### 🎛️ Varlık Ayarları (UI İçerisinden)
+
+Uygulamanın içinde sağ üstteki çarka (Ayarlar) tıkladığınızda şu varlıkları (Entity) tanımlayabilirsiniz:
+*   `DOORBELL_ENTITY`: Fiziksel kapı zilinizin Home Assistant'taki ID'si (örn: `binary_sensor.doorbell`).
+*   `DOOR_OUTER_ENTITY` / `DOOR_INNER_ENTITY`: Kapı otomatı veya akıllı kilit rölenizin ID'leri (örn: `switch.dis_kapi`).
+*   `DOORBELL_ACTION`: `open` (zil çalınca uygulamayı direkt ekrana fırlat) veya `notify` (sadece Windows bildirimi gönder).
 
 ---
 

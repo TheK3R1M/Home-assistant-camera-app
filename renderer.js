@@ -508,6 +508,10 @@ function cleanupSlotPlayers(role) {
 			imgEl.src = '';
 		} catch (e) {}
 	}
+	// Explicitly notify server to kill MJPEG ffmpeg instance
+	try {
+		fetch(`http://localhost:${streamPort}/stop-mjpeg?id=${role}`).catch(()=>{});
+	} catch (e) {}
 }
 
 // --- WebRTC Stream Establishment ---
@@ -725,7 +729,7 @@ function setupStreamSource(channelId, role) {
 			};
 			
 			// Zero-lag MJPEG stream directly from main process server
-			imgEl.src = `http://localhost:${streamPort}/mjpeg?channel=${channelId}`;
+			imgEl.src = `http://localhost:${streamPort}/mjpeg?channel=${channelId}&id=${role}`;
 		}
 	}
 }
@@ -1925,6 +1929,9 @@ function connectHAWebSocket() {
 		} else if (msg.type === 'event') {
 			const eventData = msg.event;
 			if (eventData) {
+				// Debug logging to catch the exact payload
+				console.log(`[WebSocket Debug] Received event type: ${eventData.event_type}`, JSON.stringify(eventData.data || {}));
+				
 				if (eventData.event_type === 'state_changed') {
 					const data = eventData.data;
 					if (data && data.entity_id === config.DOORBELL_ENTITY) {
@@ -1938,9 +1945,10 @@ function connectHAWebSocket() {
 						}
 					}
 				} else if (eventData.event_type === 'cam_monitor_event') {
-					const data = eventData.data;
-					if (data && data.type === 'doorbell') {
-						console.log("[WebSocket Custom Event] cam_monitor_event doorbell triggered!");
+					console.log("[WebSocket Custom Event] cam_monitor_event received!", eventData.data);
+					// Trigger doorbell on any cam_monitor_event or check for doorbell payload flexibly
+					if (!eventData.data || !eventData.data.type || eventData.data.type.toString().trim() === 'doorbell') {
+						console.log("[WebSocket Custom Event] Valid doorbell payload detected! Triggering...");
 						ipcRenderer.send('trigger-event', 'doorbell');
 					}
 				}
@@ -2933,13 +2941,18 @@ ipcRenderer.on('window-state-changed', (event, state) => {
 	console.log(`[Window State Changed] Window became: ${state}`);
 	if (state === 'hidden') {
 		isAppHidden = true;
-		// Deconstruct all players to free NVR connections, CPU, and FFmpeg transcoders
-		['main', '1', '2', '3', '4', '5'].forEach(cleanupSlotPlayers);
-		console.log("[Window State Changed] Streams and AI completely suspended.");
+		console.log("[Window State Changed] Window hidden. Suspending streams and AI to save CPU.");
+		// Stop streams cleanly to prevent socket limit exhaustion and CPU waste
+		['main', '1', '2', '3', '4', '5'].forEach(role => cleanupSlotPlayers(role));
 	} else if (state === 'visible') {
+		const wasHidden = isAppHidden;
 		isAppHidden = false;
-		console.log("[Window State Changed] Window restored, resuming streams...");
-		refreshStreams();
+		console.log("[Window State Changed] Window restored. Resuming streams and AI...");
+		if (wasHidden) {
+			refreshStreams();
+		} else {
+			jumpToLive();
+		}
 	}
 });
 
