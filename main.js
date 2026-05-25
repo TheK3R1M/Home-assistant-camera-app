@@ -576,6 +576,16 @@ function createWindow() {
 			mainWindow.webContents.send('window-state-changed', 'visible');
 		}
 	});
+
+	// Intercept all requests to Home Assistant and inject the Authorization header
+	// This allows native <img> tags to stream MJPEG feeds (/api/camera_proxy_stream) securely without CORS/WebSocket polling
+	const filter = { urls: ['http://*/*', 'https://*/*'] };
+	mainWindow.webContents.session.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
+		if (config.HA_URL && details.url.startsWith(config.HA_URL) && config.HA_TOKEN) {
+			details.requestHeaders['Authorization'] = `Bearer ${config.HA_TOKEN}`;
+		}
+		callback({ requestHeaders: details.requestHeaders });
+	});
 }
 
 function createTray() {

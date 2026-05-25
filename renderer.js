@@ -630,19 +630,27 @@ function setupHaFramePolling(channelId, videoElement, loaderElement, role) {
 		imgEl.classList.remove('hidden');
 	}
 
-	// Clean up existing polling timers
-	if (haStreamIntervals[role]) {
-		clearInterval(haStreamIntervals[role]);
-		haStreamIntervals[role] = null;
-	}
-
-	// Fetch first frame immediately
-	fetchHAFrame(channelId, imgEl, loaderElement, role);
-
-	// Start 150ms high-frequency image polling loop
-	haStreamIntervals[role] = setInterval(() => {
-		fetchHAFrame(channelId, imgEl, loaderElement, role);
-	}, 150);
+	// Clean up existing polling timers (legacy)
+  	if (haStreamIntervals[role]) {
+  		clearInterval(haStreamIntervals[role]);
+  		haStreamIntervals[role] = null;
+  	}
+  
+  	// Use Home Assistant's native MJPEG proxy stream
+  	// The Authorization header is injected natively via main.js webRequest interceptor
+  	imgEl.src = `${config.HA_URL}/api/camera_proxy_stream/${channelId}?_t=${Date.now()}`;
+  	
+  	imgEl.onload = () => {
+  		if (loaderElement) loaderElement.classList.add('hidden');
+  	};
+  	
+  	imgEl.onerror = () => {
+  		console.warn(`[Proxy Fallback] Native stream failed for ${channelId}, trying fallback snapshot API...`);
+  		// Fallback to manual polling if native stream fails
+  		haStreamIntervals[role] = setInterval(() => {
+  			fetchHAFrame(channelId, imgEl, loaderElement, role);
+  		}, 1000); // 1fps fallback
+  	};
 }
 
 // Cleanly routes fallback mode
