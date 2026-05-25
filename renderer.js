@@ -636,13 +636,15 @@ function setupHaFramePolling(channelId, videoElement, loaderElement, role) {
   		haStreamIntervals[role] = null;
   	}
   
-  	// Use Home Assistant's native MJPEG proxy stream
-  	// The Authorization header is injected natively via main.js webRequest interceptor
-  	imgEl.src = `${config.HA_URL}/api/camera_proxy_stream/${channelId}?_t=${Date.now()}`;
+  	// Use the local node.js stream server to proxy the Home Assistant MJPEG stream.
+  	// This completely bypasses all Electron <img> tag limitations and cross-origin auth issues!
+  	imgEl.src = `http://localhost:${streamPort || 9999}/ha_mjpeg?entityId=${channelId}&_t=${Date.now()}`;
   	
-  	imgEl.onload = () => {
+  	// MJPEG streams in Chrome do NOT fire onload until the stream drops!
+  	// Hide the loader manually after a short delay so the user can see the stream.
+  	setTimeout(() => {
   		if (loaderElement) loaderElement.classList.add('hidden');
-  	};
+  	}, 500);
   	
   	imgEl.onerror = () => {
   		console.warn(`[Proxy Fallback] Native stream failed for ${channelId}, trying fallback snapshot API...`);
@@ -732,9 +734,9 @@ function setupStreamSource(channelId, role) {
 			imgEl.classList.remove('hidden');
 			if (loaderEl) loaderEl.classList.remove('hidden');
 			
-			imgEl.onload = () => {
+			setTimeout(() => {
 				if (loaderEl) loaderEl.classList.add('hidden');
-			};
+			}, 500);
 			
 			// Zero-lag MJPEG stream directly from main process server
 			imgEl.src = `http://localhost:${streamPort}/mjpeg?channel=${channelId}&id=${role}`;

@@ -310,6 +310,40 @@ const streamServer = http.createServer((req, res) => {
 
 	const url = new URL(req.url, `http://localhost:${streamPort}`);
 
+	// Proxy Home Assistant MJPEG stream to bypass Electron <img> tag Authorization limitations
+	if (url.pathname === '/ha_mjpeg') {
+		const entityId = url.searchParams.get('entityId');
+		if (!entityId || !config.HA_URL || !config.HA_TOKEN) {
+			res.writeHead(400);
+			res.end('Missing config');
+			return;
+		}
+
+		const haUrl = `${config.HA_URL}/api/camera_proxy_stream/${entityId}`;
+		console.log(`[HA Proxy] Piping native MJPEG stream for ${entityId}`);
+		
+		const proxyReq = (config.HA_URL.startsWith('https') ? require('https') : require('http')).get(haUrl, {
+			headers: {
+				'Authorization': `Bearer ${config.HA_TOKEN}`
+			}
+		}, (proxyRes) => {
+			res.writeHead(proxyRes.statusCode, proxyRes.headers);
+			proxyRes.pipe(res);
+		});
+
+		proxyReq.on('error', (err) => {
+			console.error(`[HA Proxy] Error streaming ${entityId}:`, err);
+			if (!res.headersSent) res.writeHead(500);
+			res.end();
+		});
+
+		req.on('close', () => {
+			proxyReq.destroy();
+			console.log(`[HA Proxy] Client disconnected, closing stream for ${entityId}`);
+		});
+		return;
+	}
+
 	// MJPEG Ultra-Low Latency streaming endpoint
 	if (url.pathname === '/mjpeg') {
 		const channel = url.searchParams.get('channel') || '1';
