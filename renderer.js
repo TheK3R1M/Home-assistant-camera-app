@@ -573,7 +573,7 @@ async function setupWebRtcPlayer(channelId, videoElement, loaderElement, role) {
 			responseResult = await sendHaWebSocketCommand({
 				type: 'camera/webrtc/offer',
 				entity_id: channelId,
-				sdp: offer.sdp
+				offer: offer.sdp
 			});
 		} catch (modernErr) {
 			console.warn(`[WebRTC Player] Modern signaling failed: ${modernErr.message}. Trying legacy camera/web_rtc_offer...`);
