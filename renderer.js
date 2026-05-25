@@ -2033,7 +2033,8 @@ function updateCameraDropdownLabels() {
 		return currentVal;
 	};
 
-	if (cameraSelect) singleCh = populateWithHA(cameraSelect, singleCh);
+	const footerCamSelect = document.getElementById('footer-camera-select');
+	if (footerCamSelect) singleCh = populateWithHA(footerCamSelect, singleCh);
 	if (slots['1'].select) camCh1 = populateWithHA(slots['1'].select, camCh1);
 	if (slots['2'].select) camCh2 = populateWithHA(slots['2'].select, camCh2);
 	if (slots['3'].select) camCh3 = populateWithHA(slots['3'].select, camCh3);

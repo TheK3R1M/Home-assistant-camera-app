@@ -13,6 +13,7 @@ out/
 .vscode/
 
 # Runtime stream directories
+trace.txt
 stream/
 
 # Local credentials and configuration files
