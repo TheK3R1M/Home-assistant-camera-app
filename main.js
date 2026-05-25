@@ -74,6 +74,12 @@ function loadConfig() {
 	if (fs.existsSync(configPath)) {
 		try {
 			config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+			// Hotfix: Strip &q=5 from any loaded strings
+			Object.keys(config).forEach(k => {
+				if (typeof config[k] === 'string' && config[k].includes('&q=5')) {
+					config[k] = config[k].replace('&q=5', '');
+				}
+			});
 			console.log("Configuration loaded from config.json:", config);
 		} catch (e) {
 			console.error("Failed to load config.json:", e);
