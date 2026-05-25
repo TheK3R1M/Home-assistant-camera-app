@@ -320,26 +320,43 @@ const streamServer = http.createServer((req, res) => {
 		}
 
 		const haUrl = `${config.HA_URL}/api/camera_proxy_stream/${entityId}`;
-		console.log(`[HA Proxy] Piping native MJPEG stream for ${entityId}`);
+		console.log(`\n--- [DEBUG: HA Proxy] ---`);
+		console.log(`[HA Proxy] Requesting MJPEG stream for: ${entityId}`);
+		console.log(`[HA Proxy] Target URL: ${haUrl}`);
+		console.log(`[HA Proxy] Using Token: ${config.HA_TOKEN ? config.HA_TOKEN.substring(0, 15) + '...' : 'NONE'}`);
 		
 		const proxyReq = (config.HA_URL.startsWith('https') ? require('https') : require('http')).get(haUrl, {
 			headers: {
 				'Authorization': `Bearer ${config.HA_TOKEN}`
 			}
 		}, (proxyRes) => {
-			res.writeHead(proxyRes.statusCode, proxyRes.headers);
-			proxyRes.pipe(res);
-		});
+  			console.log(`[HA Proxy] Response Status Code: ${proxyRes.statusCode}`);
+  			console.log(`[HA Proxy] Response Headers:`, proxyRes.headers);
+  			
+  			if (proxyRes.statusCode !== 200) {
+  				console.warn(`[HA Proxy] WARNING: Server returned ${proxyRes.statusCode}! Stream might fail.`);
+  				// Print the error body if it fails
+  				proxyRes.on('data', (chunk) => console.log(`[HA Proxy Error Body]: ${chunk.toString()}`));
+  			}
+  			
+  			// Explicitly inject CORS headers to prevent Chromium ORB (Opaque Response Blocking) from killing the stream
+  			const headers = { ...proxyRes.headers };
+  			headers['Access-Control-Allow-Origin'] = '*';
+  			headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS';
+  			
+  			res.writeHead(proxyRes.statusCode, headers);
+  			proxyRes.pipe(res);
+  		});
 
 		proxyReq.on('error', (err) => {
-			console.error(`[HA Proxy] Error streaming ${entityId}:`, err);
+			console.error(`[HA Proxy] Network Error streaming ${entityId}:`, err.message);
 			if (!res.headersSent) res.writeHead(500);
 			res.end();
 		});
 
 		req.on('close', () => {
 			proxyReq.destroy();
-			console.log(`[HA Proxy] Client disconnected, closing stream for ${entityId}`);
+			console.log(`[HA Proxy] Client disconnected, closing stream for ${entityId}\n-----------------------\n`);
 		});
 		return;
 	}
