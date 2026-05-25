@@ -134,7 +134,7 @@ function resolveRtspUrl(channel) {
 		tspUrl = tspUrl.replace(/channel=\d+/, `channel=${channelNum}`);
 	} else {
 		const separator = tspUrl.includes('?') ? '&' : '?';
-		tspUrl = `${tspUrl}${separator}channel=${channelNum}&subtype=1&q=5`;
+		tspUrl = `${tspUrl}${separator}channel=${channelNum}&subtype=1`;
 	}
 	console.log(`[RTSP Resolution] Using base fallback URL for Channel ${channelNum}: ${tspUrl}`);
 	return tspUrl;
