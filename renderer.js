@@ -744,7 +744,7 @@ async function fetchHAFrame(entityId, imgElement, loaderElement, role) {
 		const response = await axios.get(`${config.HA_URL}/api/camera_proxy/${entityId}`, {
 			headers: { 'Authorization': `Bearer ${config.HA_TOKEN}` },
 			responseType: 'blob',
-			timeout: 1000 // Low timeout to prevent pile-up of slow requests
+			timeout: 5000 // Increased timeout to 5s for slower Home Assistant cameras
 		});
 		
 		if (response.status === 200) {
