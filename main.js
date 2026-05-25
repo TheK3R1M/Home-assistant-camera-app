@@ -593,12 +593,14 @@ function createTray() {
 }
 
 function hideWindow() {
-	if (mainWindow) {
+	if (mainWindow && !mainWindow.isDestroyed()) {
 		mainWindow.setSkipTaskbar(true); // Remove from taskbar
 		// Instead of moving off-screen which crashes GPU compositor (DWM), we use opacity
 		mainWindow.setOpacity(0);
 		mainWindow.setIgnoreMouseEvents(true);
-		mainWindow.webContents.send('window-state-changed', 'hidden');
+		if (mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
+			mainWindow.webContents.send('window-state-changed', 'hidden');
+		}
 	}
 }
 
@@ -631,7 +633,9 @@ function showWindow() {
 		if (process.platform === 'win32') {
 			mainWindow.flashFrame(true);
 		}
-		mainWindow.webContents.send('window-state-changed', 'visible');
+		if (mainWindow.webContents && !mainWindow.webContents.isDestroyed()) {
+			mainWindow.webContents.send('window-state-changed', 'visible');
+		}
 	}
 }
 
